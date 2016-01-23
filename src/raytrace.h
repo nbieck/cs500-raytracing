@@ -1,10 +1,12 @@
+#pragma once
 ///////////////////////////////////////////////////////////////////////
 // A framework for a raytracer.
 ////////////////////////////////////////////////////////////////////////
 
+#include "geom.h"
 class Shape;
 
-const float PI = 3.14159f;
+const real PI = 3.14159f;
 
 ////////////////////////////////////////////////////////////////////////
 // Material: encapsulates a BRDF and communication with a shader.
@@ -12,14 +14,14 @@ const float PI = 3.14159f;
 class Material
 {
  public:
-    Vector3f Kd, Ks;
-    float alpha;
+    Vector3 Kd, Ks;
+    real alpha;
     unsigned int texid;
 
     virtual bool isLight() { return false; }
 
-    Material()  : Kd(Vector3f(1.0, 0.5, 0.0)), Ks(Vector3f(1,1,1)), alpha(1.0), texid(0) {}
-    Material(const Vector3f d, const Vector3f s, const float a) 
+    Material()  : Kd(Vector3(1.0, 0.5, 0.0)), Ks(Vector3(1,1,1)), alpha(1.0), texid(0) {}
+    Material(const Vector3 d, const Vector3 s, const real a) 
         : Kd(d), Ks(s), alpha(a), texid(0) {}
     Material(Material& o) { Kd=o.Kd;  Ks=o.Ks;  alpha=o.alpha;  texid=o.texid; }
 
@@ -40,11 +42,11 @@ typedef Eigen::Matrix<unsigned int, 3, 1 > TriData;
 class VertexData
 {
  public:
-    Vector3f pnt;
-    Vector3f nrm;
-    Vector2f tex;
-    Vector3f tan;
-    VertexData(const Vector3f& p, const Vector3f& n, const Vector2f& t, const Vector3f& a) 
+    Vector3 pnt;
+    Vector3 nrm;
+    Vector2 tex;
+    Vector3 tan;
+    VertexData(const Vector3& p, const Vector3& n, const Vector2& t, const Vector3& a) 
         : pnt(p), nrm(n), tex(t), tan(a) 
     {}
 };
@@ -63,7 +65,7 @@ class Light: public Material
 {
 public:
 
-    Light(const Vector3f e) : Material() { Kd = e; }
+    Light(const Vector3 e) : Material() { Kd = e; }
     virtual bool isLight() { return true; }
     //virtual void apply(const unsigned int program);
 };
@@ -84,10 +86,10 @@ public:
     // The scene reader-parser will call the Command method with the
     // contents of each line in the scene file.
     void Command(const std::vector<std::string> strings,
-                 const std::vector<float> f);
+                 const std::vector<real> f);
 
     // To read a model file into the scene via ASSIMP, call ReadAssimpFile.  
-    void ReadAssimpFile(const std::string& path, const Matrix4f& M);
+    void ReadAssimpFile(const std::string& path, const Matrix4& M);
 
     // Once ReadAssimpFile parses the information from the model file,
     // it will call:

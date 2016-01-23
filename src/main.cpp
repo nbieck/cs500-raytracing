@@ -40,22 +40,22 @@ void ReadScene(const std::string inName, Scene* scene)
     // For each line in file
     for (std::string line; getline(input, line); ) {
         std::vector<std::string> strings;
-        std::vector<float> floats;
+        std::vector<real> reals;
         
-        // Parse as parallel lists of strings and floats
+        // Parse as parallel lists of strings and reals
         std::stringstream lineStream(line);
         for (std::string s; lineStream >> s; ) { // Parses space-separated strings until EOL
-            float f;
-            //std::stringstream(s) >> f; // Parses an initial float into f, or zero if illegal
+            real f;
+            //std::stringstream(s) >> f; // Parses an initial real into f, or zero if illegal
             if (!(std::stringstream(s) >> f)) f = nan(""); // An alternate that produced NANs
-            floats.push_back(f);
+            reals.push_back(f);
             strings.push_back(s); }
 
         if (strings.size() == 0) continue; // Skip blanks lines
         if (strings[0][0] == '#') continue; // Skip comment lines
         
         // Pass the line's data to Command(...)
-        scene->Command(strings, floats);
+        scene->Command(strings, reals);
     }
 
     input.close();
@@ -65,9 +65,9 @@ void ReadScene(const std::string inName, Scene* scene)
 #include "rgbe.h"
 void WriteHdrImage(const std::string outName, const int width, const int height, Color* image)
 {
-    // Turn image from a 2D-bottom-up array of Vector3D to an top-down-array of floats
-    float* data = new float[width*height*3];
-    float* dp = data;
+    // Turn image from a 2D-bottom-up array of Vector3D to an top-down-array of reals
+    real* data = new real[width*height*3];
+    real* dp = data;
     for (int y=height-1;  y>=0;  --y) {
         for (int x=0;  x<width;  ++x) {
             Color pixel = image[y*width + x];

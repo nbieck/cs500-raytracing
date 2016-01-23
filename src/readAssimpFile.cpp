@@ -19,7 +19,7 @@ void recurseModelNodes(Scene* scene,
                        const aiMatrix4x4& parentTr,
                        const int level=0);
 
-void Scene::ReadAssimpFile(const std::string& path, const Matrix4f& M)
+void Scene::ReadAssimpFile(const std::string& path, const Matrix4& M)
 {
     aiMatrix4x4 modelTr(M(0,0), M(0,1), M(0,2), M(0,3),
                         M(1,0), M(1,1), M(1,2), M(1,3),
@@ -69,9 +69,9 @@ void recurseModelNodes(Scene* scene,
         //aiColor3D spec (0.f,0.f,0.f); 
         //float s;
         // if (AI_SUCCESS == mtl->Get(AI_MATKEY_COLOR_DIFFUSE, diff))
-        //     scene->setKd(Vector3f(diff.r, diff.g, diff.b));
+        //     scene->setKd(Vector3(diff.r, diff.g, diff.b));
         // if (AI_SUCCESS == mtl->Get(AI_MATKEY_COLOR_SPECULAR, spec))
-        //     scene->setKs(Vector3f(spec.r, spec.g, spec.b));
+        //     scene->setKs(Vector3(spec.r, spec.g, spec.b));
         // if (AI_SUCCESS == mtl->Get(AI_MATKEY_SHININESS, &s, NULL))
         //     scene->setAlpha(s);
         
@@ -92,10 +92,10 @@ void recurseModelNodes(Scene* scene,
             aiVector3D aitan = aimesh->HasTangentsAndBitangents() ? normalTr*aimesh->mTangents[t] :  aiVector3D(1,0,0);
 
           
-            meshdata->vertices.push_back(VertexData(Vector3f(aipnt.x, aipnt.y, aipnt.z),
-                                                    Vector3f(ainrm.x, ainrm.y, ainrm.z),
-                                                    Vector2f(aitex.x, aitex.y),
-                                                    Vector3f(aitan.x, aitan.y, aitan.z))); }
+            meshdata->vertices.push_back(VertexData(Vector3(aipnt.x, aipnt.y, aipnt.z),
+                                                    Vector3(ainrm.x, ainrm.y, ainrm.z),
+                                                    Vector2(aitex.x, aitex.y),
+                                                    Vector3(aitan.x, aitan.y, aitan.z))); }
         
         // Loop through all faces, recording indices
         for (unsigned int t=0;  t<aimesh->mNumFaces;  ++t) {

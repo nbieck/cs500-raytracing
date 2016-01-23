@@ -41,24 +41,24 @@ void Scene::triangleMesh(MeshData* mesh)
     realtime->triangleMesh(mesh); 
 }
 
-Quaternionf Orientation(int i, 
+Quaternion Orientation(int i, 
                         const std::vector<std::string>& strings,
-                        const std::vector<float>& f)
+                        const std::vector<real>& f)
 {
-    Quaternionf q(1,0,0,0); // Unit quaternion
+    Quaternion q(1,0,0,0); // Unit quaternion
     while (i<strings.size()) {
         std::string c = strings[i++];
         if (c == "x")  
-            q *= angleAxis(f[i++]*Radians, Vector3f::UnitX());
+            q *= angleAxis(f[i++]*Radians, Vector3::UnitX());
         else if (c == "y")  
-            q *= angleAxis(f[i++]*Radians, Vector3f::UnitY());
+            q *= angleAxis(f[i++]*Radians, Vector3::UnitY());
         else if (c == "z")  
-            q *= angleAxis(f[i++]*Radians, Vector3f::UnitZ());
+            q *= angleAxis(f[i++]*Radians, Vector3::UnitZ());
         else if (c == "q")  {
-            q *= Quaternionf(f[i+0], f[i+1], f[i+2], f[i+3]);
+            q *= Quaternion(f[i+0], f[i+1], f[i+2], f[i+3]);
             i+=4; }
         else if (c == "a")  {
-            q *= angleAxis(f[i+0]*Radians, Vector3f(f[i+1], f[i+2], f[i+3]).normalized());
+            q *= angleAxis(f[i+0]*Radians, Vector3(f[i+1], f[i+2], f[i+3]).normalized());
             i+=4; } }
     return q;
 }
@@ -87,7 +87,7 @@ void Material::setTexture(const std::string path)
 }
 
 void Scene::Command(const std::vector<std::string> strings,
-                    const std::vector<float> f)
+                    const std::vector<real> f)
 {
     if (strings.size() == 0) return;
     std::string c = strings[0];
@@ -101,14 +101,14 @@ void Scene::Command(const std::vector<std::string> strings,
     else if (c == "camera") {
         // syntax: camera x y z   ry   <orientation spec>
         // Eye position (x,y,z),  view orientation (qw qx qy qz),  frustum height ratio ry
-        realtime->setCamera(Vector3f(f[1],f[2],f[3]), Orientation(5,strings,f), f[4]); }
+        realtime->setCamera(Vector3(f[1],f[2],f[3]), Orientation(5,strings,f), f[4]); }
 
     else if (c == "ambient") {
         // syntax: ambient r g b
         // Sets the ambient color.  Note: This parameter is temporary.
         // It will be ignored once your raytracer becomes capable of
         // accurately *calculating* the true ambient light.
-        realtime->setAmbient(Vector3f(f[1], f[2], f[3])); }
+        realtime->setAmbient(Vector3(f[1], f[2], f[3])); }
 
     else if (c == "brdf")  {
         // syntax: brdf  r g b   r g b  alpha
@@ -116,28 +116,28 @@ void Scene::Command(const std::vector<std::string> strings,
         // First rgb is Diffuse reflection, second is specular reflection.
         // third is beer's law transmission followed by index of refraction.
         // Creates a Material instance to be picked up by successive shapes
-        currentMat = new Material(Vector3f(f[1], f[2], f[3]), Vector3f(f[4], f[5], f[6]), f[7]); }
+        currentMat = new Material(Vector3(f[1], f[2], f[3]), Vector3(f[4], f[5], f[6]), f[7]); }
 
     else if (c == "light") {
         // syntax: light  r g b   
         // The rgb is the emission of the light
         // Creates a Material instance to be picked up by successive shapes
-        currentMat = new Light(Vector3f(f[1], f[2], f[3])); }
+        currentMat = new Light(Vector3(f[1], f[2], f[3])); }
    
     else if (c == "sphere") {
         // syntax: sphere x y z   r
         // Creates a Shape instance for a sphere defined by a center and radius
-        realtime->sphere(Vector3f(f[1], f[2], f[3]), f[4], currentMat); }
+        realtime->sphere(Vector3(f[1], f[2], f[3]), f[4], currentMat); }
 
     else if (c == "box") {
         // syntax: box bx by bz   dx dy dz
         // Creates a Shape instance for a box defined by a corner point and diagonal vector
-        realtime->box(Vector3f(f[1], f[2], f[3]), Vector3f(f[4], f[5], f[6]), currentMat); }
+        realtime->box(Vector3(f[1], f[2], f[3]), Vector3(f[4], f[5], f[6]), currentMat); }
 
     else if (c == "cylinder") {
         // syntax: cylinder bx by bz   ax ay az  r
         // Creates a Shape instance for a cylinder defined by a base point, axis vector, and radius
-        realtime->cylinder(Vector3f(f[1], f[2], f[3]), Vector3f(f[4], f[5], f[6]), f[7], currentMat); }
+        realtime->cylinder(Vector3(f[1], f[2], f[3]), Vector3(f[4], f[5], f[6]), f[7], currentMat); }
 
     else if (c == "mesh") {
         // syntax: mesh   filename   tx ty tz   s   <orientation>
@@ -145,8 +145,8 @@ void Scene::Command(const std::vector<std::string> strings,
         // model(s) from filename. All triangles are rotated by a
         // quaternion (qw qx qy qz), uniformly scaled by s, and
         // translated by (tx ty tz) .
-        Matrix4f modelTr = translate(Vector3f(f[2],f[3],f[4]))
-                          *scale(Vector3f(f[5],f[5],f[5]))
+        Matrix4 modelTr = translate(Vector3(f[2],f[3],f[4]))
+                          *scale(Vector3(f[5],f[5],f[5]))
                           *toMat4(Orientation(6,strings,f));
         ReadAssimpFile(strings[1], modelTr);  }
 

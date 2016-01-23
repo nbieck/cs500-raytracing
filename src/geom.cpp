@@ -1,29 +1,29 @@
 #include <iostream>
 #include "geom.h"
 
-Quaternionf angleAxis(const float& angle, const Vector3f& axis)
-{ return Quaternionf(AngleAxisf(angle, axis)); }
+Quaternion angleAxis(const real& angle, const Vector3& axis)
+{ return Quaternion(Eigen::AngleAxisf(angle, axis)); }
 
-Matrix4f toMat4(const Quaternionf& q)
-{ return Transform<float,3,Affine>(q).matrix(); }
+Matrix4 toMat4(const Quaternion& q)
+{ return Eigen::Transform<real,3,Eigen::Affine>(q).matrix(); }
 
-Matrix4f rotate(const float& angle, const Vector3f& axis)
-{  return Transform<float,3,Affine>(
-                         Quaternionf(AngleAxisf(angle, axis))).matrix(); }
+Matrix4 rotate(const real& angle, const Vector3& axis)
+{  return Eigen::Transform<real,3,Eigen::Affine>(
+                         Quaternion(Eigen::AngleAxisf(angle, axis))).matrix(); }
         
-Matrix4f scale(const Vector3f& v)
-{  return Transform<float,3,Affine>(
-                         DiagonalMatrix<float,3>(v)).matrix(); }
+Matrix4 scale(const Vector3& v)
+{  return Eigen::Transform<real,3,Eigen::Affine>(
+                         Eigen::DiagonalMatrix<real,3>(v)).matrix(); }
 
-Matrix4f translate(const Vector3f& v)
-{  return Transform<float,3,Affine>(Translation<float,3>(v)).matrix(); }
+Matrix4 translate(const Vector3& v)
+{  return Eigen::Transform<real,3,Eigen::Affine>(Eigen::Translation<real,3>(v)).matrix(); }
 
 // The standard glFrustum perspective projection matrix.
-Matrix4f frustum(float const& left,    float const& right,
-                 float const& bottom,  float const& top,
-                 float const& nearVal, float const& farVal)
+Matrix4 frustum(real const& left,    real const& right,
+                 real const& bottom,  real const& top,
+                 real const& nearVal, real const& farVal)
 {
-    Matrix4f R = Matrix4f::Zero();
+    Matrix4 R = Matrix4::Zero();
     R(0,0) = (2.0*nearVal)         / (right-left);
     R(1,1) = (2.0*nearVal)         / (top-bottom);
     R(0,2) = (right+left)          / (right-left);
@@ -35,15 +35,15 @@ Matrix4f frustum(float const& left,    float const& right,
     return R;
 }
 
-template <> void Print(const std::string& s, const float& f)
+template <> void Print(const std::string& s, const real& f)
 { std::cout << s << ": " << f << std::endl; }
 
 template <> void Print(const std::string& s, const double& f)
 { std::cout << s << ": " << f << std::endl; }
 
-template <> void Print(const std::string& s, const Quaternionf& q)
+template <> void Print(const std::string& s, const Quaternion& q)
 {
-    IOFormat Fmt(3, DontAlignCols, ", ", "  |  ", "", "", ": [", "]\n");
+    Eigen::IOFormat Fmt(3, Eigen::DontAlignCols, ", ", "  |  ", "", "", ": [", "]\n");
     std::cout << s << ": " << q.w() << q.vec().format(Fmt); 
 }
 

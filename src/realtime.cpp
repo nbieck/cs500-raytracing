@@ -43,20 +43,20 @@ unsigned int MakeVAO(MeshData* meshdata)
     GLuint Pbuff;
     glGenBuffers(1, &Pbuff);
     glBindBuffer(GL_ARRAY_BUFFER, Pbuff);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*11*meshdata->vertices.size(), 
+    glBufferData(GL_ARRAY_BUFFER, sizeof(real)*11*meshdata->vertices.size(), 
                  &(meshdata->vertices[0].pnt.x()), GL_STATIC_DRAW);
     
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11*sizeof(real), (void*)0);
     
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11*sizeof(real), (void*)(3*sizeof(real)));
     
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)(6*sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11*sizeof(real), (void*)(6*sizeof(real)));
     
     glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)(8*sizeof(float)));
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11*sizeof(real), (void*)(8*sizeof(real)));
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
@@ -76,18 +76,18 @@ MeshData* SphMesh()
 {
     MeshData* meshdata = new MeshData();
     unsigned int n = 20;
-    float d = 2.0f*PI/float(n*2);
+    real d = 2.0f*PI/real(n*2);
     for (unsigned int i=0;  i<=n*2;  i++) {
-        float s = i*2.0f*PI/float(n*2);
+        real s = i*2.0f*PI/real(n*2);
         for (unsigned int j=0;  j<=n;  j++) {
-            float t = j*PI/float(n);
-            float x = cos(s)*sin(t);
-            float y = sin(s)*sin(t);
-            float z = cos(t);
-            meshdata->vertices.push_back(VertexData(Vector3f(x,y,z),
-                                                    Vector3f(x,y,z),
-                                                    Vector2f(s/(2*PI), t/PI),
-                                                    Vector3f(sin(s), cos(s), 0.0)));
+            real t = j*PI/real(n);
+            real x = cos(s)*sin(t);
+            real y = sin(s)*sin(t);
+            real z = cos(t);
+            meshdata->vertices.push_back(VertexData(Vector3(x,y,z),
+                                                    Vector3(x,y,z),
+                                                    Vector2(s/(2*PI), t/PI),
+                                                    Vector3(sin(s), cos(s), 0.0)));
             if (i>0 && j>0) {
                 meshdata->triangles.push_back(TriData((i-1)*(n+1) + (j-1), 
                                                       (i-1)*(n+1) + (j  ), 
@@ -100,28 +100,28 @@ MeshData* SphMesh()
 
 MeshData* BoxMesh()
 {
-    Matrix4f face[6] = {
-        Matrix4f::Identity(),
-        rotate(180.0f*Radians, Vector3f(1.0f, 0.0f, 0.0f)),
-        rotate( 90.0f*Radians, Vector3f(1.0f, 0.0f, 0.0f)),
-        rotate(-90.0f*Radians, Vector3f(1.0f, 0.0f, 0.0f)),
-        rotate( 90.0f*Radians, Vector3f(0.0f, 1.0f, 0.0f)),
-        rotate(-90.0f*Radians, Vector3f(0.0f, 1.0f, 0.0f))};
+    Matrix4 face[6] = {
+        Matrix4::Identity(),
+        rotate(180.0f*Radians, Vector3(1.0f, 0.0f, 0.0f)),
+        rotate( 90.0f*Radians, Vector3(1.0f, 0.0f, 0.0f)),
+        rotate(-90.0f*Radians, Vector3(1.0f, 0.0f, 0.0f)),
+        rotate( 90.0f*Radians, Vector3(0.0f, 1.0f, 0.0f)),
+        rotate(-90.0f*Radians, Vector3(0.0f, 1.0f, 0.0f))};
        
-    Matrix4f half = translate(Vector3f(0.5f, 0.5f, 0.5f))*scale(Vector3f(0.5f, 0.5f, 0.5f));
+    Matrix4 half = translate(Vector3(0.5f, 0.5f, 0.5f))*scale(Vector3(0.5f, 0.5f, 0.5f));
     MeshData* meshdata = new MeshData();
     for (unsigned int f=0;  f<6;  f++) {
-        Matrix4f m4 = half*face[f];
-        Matrix3f m3 = m4.block<3,3>(0,0);
+        Matrix4 m4 = half*face[f];
+        Eigen::Matrix3f m3 = m4.block<3,3>(0,0);
         for (unsigned int i=0;  i<2;  i++) {
             for (unsigned int j=0;  j<2;  j++) {
-              Vector4f p = m4*Vector4f(float(2*i)-1.0f, float(2*j)-1.0f, 1.0f, 1.0f);
-              Vector3f tnrm = m3*Vector3f(0.0f, 0.0f, 1.0f);
-              Vector3f ttan = m3*Vector3f(1.0, 0.0, 0.0);
-              meshdata->vertices.push_back(VertexData(Vector3f(p[0], p[1], p[2]),
-                                                      Vector3f(tnrm[0], tnrm[1], tnrm[2]),
-                                                      Vector2f(float(i), float(j)),
-                                                      Vector3f(ttan[0], ttan[1], ttan[2])));
+              Eigen::Vector4f p = m4*Eigen::Vector4f(real(2*i)-1.0f, real(2*j)-1.0f, 1.0f, 1.0f);
+              Vector3 tnrm = m3*Vector3(0.0f, 0.0f, 1.0f);
+              Vector3 ttan = m3*Vector3(1.0, 0.0, 0.0);
+              meshdata->vertices.push_back(VertexData(Vector3(p[0], p[1], p[2]),
+                                                      Vector3(tnrm[0], tnrm[1], tnrm[2]),
+                                                      Vector2(real(i), real(j)),
+                                                      Vector3(ttan[0], ttan[1], ttan[2])));
               meshdata->triangles.push_back(TriData(4*f+0, 4*f+1, 4*f+3));
               meshdata->triangles.push_back(TriData(4*f+0, 4*f+3, 4*f+2)); } } }
     return meshdata;
@@ -131,21 +131,21 @@ MeshData* CylMesh()
 {
     MeshData* meshdata = new MeshData();
     unsigned int n = 20;
-    float d = 2.0f*PI/float(n*2);
+    real d = 2.0f*PI/real(n*2);
     for (unsigned int i=0;  i<=n;  i++) {
-        float s = i*2.0f*PI/float(n);
-        float x = cos(s);
-        float y = sin(s);
+        real s = i*2.0f*PI/real(n);
+        real x = cos(s);
+        real y = sin(s);
         
-        meshdata->vertices.push_back(VertexData(Vector3f(x, y, 0.0f),
-                                                Vector3f(x, y, 0.0f),
-                                                Vector2f(s/(2*PI), 0.0f),
-                                                Vector3f(-sin(s), cos(s), 0.0f)));
+        meshdata->vertices.push_back(VertexData(Vector3(x, y, 0.0f),
+                                                Vector3(x, y, 0.0f),
+                                                Vector2(s/(2*PI), 0.0f),
+                                                Vector3(-sin(s), cos(s), 0.0f)));
 
-        meshdata->vertices.push_back(VertexData(Vector3f(x, y, 1.0f),
-                                                Vector3f(x, y, 0.0f),
-                                                Vector2f(s/(2*PI), 0.0f),
-                                                Vector3f(-sin(s), cos(s), 0.0f)));
+        meshdata->vertices.push_back(VertexData(Vector3(x, y, 1.0f),
+                                                Vector3(x, y, 0.0f),
+                                                Vector2(s/(2*PI), 0.0f),
+                                                Vector3(-sin(s), cos(s), 0.0f)));
 
         if (i>0) {
             meshdata->triangles.push_back(TriData((i-1)*2+1, (i-1)*2, (i  )*2));
@@ -236,7 +236,7 @@ void applyMaterial(Material* mat, const unsigned int program)
 ////////////////////////////////////////////////////////////////////////
 void applyLight(Material* mat, const unsigned int program)
 {
-    Vector3f Z;
+    Vector3 Z;
     
     int loc = glGetUniformLocation(program, "Kd");
     glUniform3fv(loc, 1, &mat->Kd[0]);
@@ -248,14 +248,14 @@ void applyLight(Material* mat, const unsigned int program)
 ////////////////////////////////////////////////////////////////////////
 // Obj: encapsulates objects to be drawn; uses OpenGL's VAOs
 ////////////////////////////////////////////////////////////////////////
-Obj::Obj(MeshData* m, const Matrix4f& tr, Material* b)
+Obj::Obj(MeshData* m, const Matrix4& tr, Material* b)
     : meshdata(m), modelTR(tr), material(b)
 {
-    Vector4f sum(0,0,0,0);
+    Eigen::Vector4f sum(0,0,0,0);
     //for (int i=0;  i<meshdata->vertices.size();  i++)
-    //    sum += modelTR*Vector4f(v.pnt[0], v.pnt[1], v.pnt[2], 1.0);
+    //    sum += modelTR*Eigen::Vector4f(v.pnt[0], v.pnt[1], v.pnt[2], 1.0);
     for (auto v : meshdata->vertices) // C++11 for loop
-        sum += modelTR*Vector4f(v.pnt[0], v.pnt[1], v.pnt[2], 1.0);
+        sum += modelTR*Eigen::Vector4f(v.pnt[0], v.pnt[1], v.pnt[2], 1.0);
 
     center = (sum/meshdata->vertices.size()).block<3,1>(0,0); 
     
@@ -352,20 +352,20 @@ void Realtime::run()
 // Called when the scene needs to be redrawn.
 void Realtime::DrawScene()
 {
-    Vector3f viewDir = ViewDirection();
-    Vector2f dir2 = Vector2f(viewDir.x(), viewDir.y()).normalized();
+    Vector3 viewDir = ViewDirection();
+    Vector2 dir2 = Vector2(viewDir.x(), viewDir.y()).normalized();
     if (motionkey == 'w')
-        eye += speed*Vector3f(dir2.x(), dir2.y(), 0.0);
+        eye += speed*Vector3(dir2.x(), dir2.y(), 0.0);
     if (motionkey == 's')
-        eye -= speed*Vector3f(dir2.x(), dir2.y(), 0.0);
+        eye -= speed*Vector3(dir2.x(), dir2.y(), 0.0);
     if (motionkey == 'd')
-        eye += speed*Vector3f(dir2.y(), -dir2.x(), 0.0);
+        eye += speed*Vector3(dir2.y(), -dir2.x(), 0.0);
     if (motionkey == 'a')
-        eye -= speed*Vector3f(dir2.y(), -dir2.x(), 0.0);
+        eye -= speed*Vector3(dir2.y(), -dir2.x(), 0.0);
     if (motionkey == 'e')
-        eye -= speed*Vector3f(0.0f, 0.0f, -1.0f);
+        eye -= speed*Vector3(0.0f, 0.0f, -1.0f);
     if (motionkey == 'c')
-        eye -= speed*Vector3f(0.0f, 0.0f, 1.0f);
+        eye -= speed*Vector3(0.0f, 0.0f, 1.0f);
     
     int loc;
 
@@ -374,12 +374,12 @@ void Realtime::DrawScene()
     glDisable(GL_LIGHTING);
     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 
-    Matrix4f WorldView;
-    Matrix4f R = toMat4(ViewQuaternion().conjugate());
+    Matrix4 WorldView;
+    Matrix4 R = toMat4(ViewQuaternion().conjugate());
     WorldView = R*translate(-eye);
 
-    float rx = (ry*width)/height;
-    Matrix4f WorldProj = frustum(-front*rx, front*rx, -front*ry, front*ry, front, back);
+    real rx = (ry*width)/height;
+    Matrix4 WorldProj = frustum(-front*rx, front*rx, -front*ry, front*ry, front, back);
 
     lighting.Use();
 
@@ -395,8 +395,8 @@ void Realtime::DrawScene()
     loc = glGetUniformLocation(lighting.program, "eyePos");
     glUniform3fv(loc, 1, &eye[0]);
 
-    Vector3f lightEmit[8];
-    Vector3f lightPosn[8];
+    Vector3 lightEmit[8];
+    Vector3 lightPosn[8];
     int  lightNum = lights.size();
     for (int i=0;  i<lightNum;  i++) {
         lightPosn[i] = lights[i]->Center();
@@ -413,13 +413,13 @@ void Realtime::DrawScene()
         
     // for (unsigned int i=0;  i<objs.size();  i++) {
     //     Material* material = objs[i]->material;
-    //     Matrix4f& modelTR = objs[i]->modelTR;
+    //     Matrix4& modelTR = objs[i]->modelTR;
     //     ...
     //     objs[i]->draw();
     for (auto obj : objs) {     // C++11 loop
         Material* material = obj->material;
-        Matrix4f& modelTR = obj->modelTR;
-        Matrix3f normalTR = modelTR.inverse().block<3,3>(0,0);
+        Matrix4& modelTR = obj->modelTR;
+        Eigen::Matrix3f normalTR = modelTR.inverse().block<3,3>(0,0);
 
         loc = glGetUniformLocation(lighting.program, "ModelTr");
         glUniformMatrix4fv(loc, 1, GL_FALSE, modelTR.data());
@@ -462,7 +462,7 @@ void Realtime::KeyboardDown(unsigned char key, int x, int y)
         break;
 
     case 'v': {
-        Quaternionf q = ViewQuaternion();
+        Quaternion q = ViewQuaternion();
         printf("camera  %g %g %g   %g   q %g %g %g %g\n",
                eye[0], eye[1], eye[2], ry,  q.w(), q.x(), q.y(), q.z());
         printf("screen %d %d\n", width, height);
@@ -509,12 +509,12 @@ void Realtime::MouseButton(int button, int state, int x, int y)
         rightDown = (state == GLUT_DOWN); }
 
     else if (button == 3) {
-        Vector3f C = eye + cDist*ViewDirection();
+        Vector3 C = eye + cDist*ViewDirection();
         cDist = pow(cDist, 1.0f/1.02f); 
         eye = C - cDist*ViewDirection(); }
 
     else if (button == 4) {
-        Vector3f C = eye + cDist*ViewDirection();
+        Vector3 C = eye + cDist*ViewDirection();
         cDist = pow(cDist, 1.02f);
         eye = C - cDist*ViewDirection(); }
     
@@ -534,7 +534,7 @@ void Realtime::MouseMotion(int x, int y)
             spin += dx/2.0f;
             tilt += dy/2.0f; }
         else {
-            Vector3f C = eye + cDist*ViewDirection();
+            Vector3 C = eye + cDist*ViewDirection();
             spin += dx/2.0f;
             tilt += dy/2.0f;
             eye = C - cDist*ViewDirection(); } }
@@ -550,19 +550,19 @@ void Realtime::MouseMotion(int x, int y)
 }
 
 
-void Realtime::sphere(const Vector3f center, const float r, Material* mat)
+void Realtime::sphere(const Vector3 center, const real r, Material* mat)
 {
-    Matrix4f m = translate(center) * scale(Vector3f(r,r,r));
-    Vector3f rrr(r,r,r);
+    Matrix4 m = translate(center) * scale(Vector3(r,r,r));
+    Vector3 rrr(r,r,r);
     Obj* obj = new Obj(sphMesh, m, mat);
     objs.push_back(obj);
     if (mat->isLight())
         lights.push_back(obj);
 }
 
-void Realtime::box(const Vector3f base, const Vector3f diag, Material* mat)
+void Realtime::box(const Vector3 base, const Vector3 diag, Material* mat)
 {
-    Matrix4f m = translate(base) * scale(Vector3f(diag[0],diag[1],diag[2]));
+    Matrix4 m = translate(base) * scale(Vector3(diag[0],diag[1],diag[2]));
     Obj* obj = new Obj(boxMesh, m, mat);
     objs.push_back(obj);
     if (mat->isLight())
@@ -570,24 +570,24 @@ void Realtime::box(const Vector3f base, const Vector3f diag, Material* mat)
 }
 
 
-void Realtime::cylinder(const Vector3f base, const Vector3f axis, const float radius, Material* mat)
+void Realtime::cylinder(const Vector3 base, const Vector3 axis, const real radius, Material* mat)
 {
-    Vector3f Z(0.0f, 0.0f, 1.0f);
-    Vector3f C = axis.normalized();
-    Vector3f B = C.cross(Z);
+    Vector3 Z(0.0f, 0.0f, 1.0f);
+    Vector3 C = axis.normalized();
+    Vector3 B = C.cross(Z);
     if (B.norm() <1e-8)
-        B = Vector3f(0,1,0);
+        B = Vector3(0,1,0);
     else
         B = B.normalized();
-    Vector3f A = B.cross(C).normalized();
-    Matrix4f R;
+    Vector3 A = B.cross(C).normalized();
+    Matrix4 R;
     R<< A(0),B(0),C(0),0.0f,    // Row-wise text (although init is col-wise)
         A(1),B(1),C(1),0.0f,
         A(2),B(2),C(2),0.0f,
         0.0f, 0.0f, 0.0f, 1.0;
 
-    Matrix4f m = translate(base)*R*scale(Vector3f(radius,radius,axis.norm()));
-    Vector3f rrr(radius,radius,radius);
+    Matrix4 m = translate(base)*R*scale(Vector3(radius,radius,axis.norm()));
+    Vector3 rrr(radius,radius,radius);
     Obj* obj = new Obj(cylMesh, m, mat);
     objs.push_back(obj);
     if (mat->isLight())
