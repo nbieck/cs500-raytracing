@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include <Eigen/StdVector> // For vectors, matrices (2d,3d,4d) and quaternions in f and d precision.
-#include <Eigen_unsupported/Eigen/BVH> // For KdBVH
+#include <unsupported/Eigen/BVH> // For KdBVH
 
 using namespace Eigen;
 
