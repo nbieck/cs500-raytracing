@@ -26,7 +26,6 @@ class Material
     Material(Material& o) { Kd=o.Kd;  Ks=o.Ks;  alpha=o.alpha;  texid=o.texid; }
 
     void setTexture(const std::string path);
-    //virtual void apply(const unsigned int program);
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -67,7 +66,6 @@ public:
 
     Light(const Vector3 e) : Material() { Kd = e; }
     virtual bool isLight() { return true; }
-    //virtual void apply(const unsigned int program);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
