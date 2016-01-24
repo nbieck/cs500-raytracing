@@ -11,12 +11,12 @@
 //typedefs
 ///////////////////////////////////////////////////////////////////////
 using real = float;
-using Color = Eigen::Array3f;
+using Color = Eigen::Array<real,3,1>;
 using Bbox  = Eigen::AlignedBox<real,3>;
-using Quaternion = Eigen::Quaternionf;
-using Matrix4 = Eigen::Matrix4f;
-using Vector3 = Eigen::Vector3f;
-using Vector2 = Eigen::Vector2f;
+using Quaternion = Eigen::Quaternion<real>;
+using Matrix4 = Eigen::Matrix<real,4,4>;
+using Vector3 = Eigen::Matrix<real,3,1>;
+using Vector2 = Eigen::Matrix<real,2,1>;
 
 // Some convenience procedures: These are all provided by Eigen, but
 // require two nested constructor calls to get the final result, with
