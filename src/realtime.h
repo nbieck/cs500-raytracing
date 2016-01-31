@@ -16,7 +16,6 @@
 using namespace gl;
 #include <freeglut.h>
 
-const real Radians = PI/180.0f;    // Convert degrees to radians
 
 ////////////////////////////////////////////////////////////////////////
 // Shader programming class;  Encapsulates a OpenGL Shader.
