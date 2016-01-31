@@ -19,7 +19,7 @@ public:
 
     Ray(Vector3 p, Vector3 d);
 
-    Vector3 Eval(float t);
+    Vector3 Eval(float t) const;
 
     Vector3 GetPos() const;
     Vector3 GetDir() const;
