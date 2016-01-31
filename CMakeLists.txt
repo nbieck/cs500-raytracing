@@ -8,7 +8,10 @@ SET(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 SET(LIB_DIR ${CMAKE_SOURCE_DIR}/libs)
 SET(TESTS_DIR ${SOURCE_DIR}/test)
 
-SET(SOURCE_FILES geom.cpp main.cpp raytrace.cpp readAssimpFile.cpp realtime.cpp rgbe.cpp)
+SET(SOURCE_FILES geom.cpp main.cpp raytrace.cpp readAssimpFile.cpp realtime.cpp rgbe.cpp
+    )
+SET(TESTABLE_SOURCES ray_shapes.cpp)
+SET(TEST_SOURCE ray_sphere.cpp)
 SET(HEADER_FILES geom.h raytrace.h realtime.h rgbe.h ray_shapes.h material.h)
 
 #########################################################################
@@ -43,16 +46,15 @@ FOREACH(_FILE ${HEADER_FILES})
     LIST(APPEND FULL_SOURCE ${SOURCE_DIR}/${_FILE})
 ENDFOREACH()
 
-ADD_EXECUTABLE(Raytracer ${FULL_SOURCE})
-TARGET_LINK_LIBRARIES(Raytracer 
-    ${Assimp_LIB} 
-    ${GLBINDING_LOC} 
-    ${FREEGLUT_LOC} 
-    ${X11_LIBRARIES}
-    ${OPENGL_gl_LIBRARY}
-    -fopenmp)
-TARGET_INCLUDE_DIRECTORIES(Raytracer
-    PUBLIC
+FOREACH(_FILE ${TEST_SOURCE})
+    LIST(APPEND TESTS ${TEST_DIR}/${_FILE})
+ENDFOREACH()
+
+FOREACH(_FILE ${TESTABLE_SOURCES})
+    LIST(APPEND TESTABLE_SRC ${SOURCE_DIR}/${_FILE})
+ENDFOREACH()
+
+SET(INC_DIRS 
     ${EIGEN_INCLUDE_DIR}
     ${X11_INCLUDE_DIR}
     ${LIB_DIR}/glbinding
@@ -62,20 +64,41 @@ TARGET_INCLUDE_DIRECTORIES(Raytracer
     ${OPENGL_INCLUDE_DIR}
     ${SOURCE_DIR}
     )
-TARGET_COMPILE_DEFINITIONS(Raytracer
-    PUBLIC
+SET(DEFS 
     -DEIGEN_NO_DEBUG
     -DEIGEN_DONT_ALIGN_STATICALLY)
-TARGET_COMPILE_OPTIONS(Raytracer
-    PUBLIC
+SET(OPTS
     -Wnarrowing -fopenmp -msse3 -Wno-deprecated-declarations -std=c++11 -g -O4 -Werror)
+
+ADD_LIBRARY(Testable OBJECT ${TESTABLE_SRC})
+TARGET_INCLUDE_DIRECTORIES(Testable PUBLIC ${INC_DIRS})
+TARGET_COMPILE_DEFINITIONS(Testable PUBLIC ${DEFS})
+TARGET_COMPILE_OPTIONS(Testable PUBLIC ${OPTS})
+
+
+ADD_EXECUTABLE(Raytracer ${FULL_SOURCE} $<TARGET_OBJECTS:Testable>)
+TARGET_LINK_LIBRARIES(Raytracer 
+    ${Assimp_LIB} 
+    ${GLBINDING_LOC} 
+    ${FREEGLUT_LOC} 
+    ${X11_LIBRARIES}
+    ${OPENGL_gl_LIBRARY}
+    -fopenmp)
+TARGET_INCLUDE_DIRECTORIES(Raytracer
+    PUBLIC
+    ${INC_DIRS}
+    )
+TARGET_COMPILE_DEFINITIONS(Raytracer
+    PUBLIC ${DEFS})
+TARGET_COMPILE_OPTIONS(Raytracer
+    PUBLIC ${OPTS})
 SET_TARGET_PROPERTIES(Raytracer PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 #SETUP TESTING ONLY IF GTEST EXISTS
 IF (GTEST_FOUND)
     ENABLE_TESTING()
 
-    ADD_EXECUTABLE(Tests ${TESTS_DIR}/temp.cpp)
+    ADD_EXECUTABLE(Tests ${TESTS_DIR}/ray_sphere.cpp $<TARGET_OBJECTS:Testable>)
     TARGET_LINK_LIBRARIES(Tests
         PUBLIC
         ${GTEST_MAIN_LIBRARY}

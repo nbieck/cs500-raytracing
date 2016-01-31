@@ -38,3 +38,29 @@ public:
     
     Material* mat;
 };
+
+class Sphere : public Shape
+{
+public:
+    Sphere(Vector3 c, real r)
+        : m_c(c), m_r(r) {}
+
+    bool Intersect(const Ray& ray, Intersection& intersection) override;
+
+private:
+
+    Vector3 m_c;
+    real m_r;
+};
+
+class AABB : public Shape
+{
+};
+
+class Cylinder : public Shape
+{
+};
+
+class Triangle : public Shape
+{
+};
