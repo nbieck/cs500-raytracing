@@ -55,6 +55,16 @@ private:
 
 class AABB : public Shape
 {
+public:
+
+    AABB(Vector3 c, Vector3 diag)
+        : m_c(c), m_diag(diag) {}
+
+    bool Intersect(const Ray& ray, Intersection& intersection) override;
+
+private:
+    Vector3 m_c;
+    Vector3 m_diag;
 };
 
 class Cylinder : public Shape

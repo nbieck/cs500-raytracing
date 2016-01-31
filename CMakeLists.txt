@@ -11,7 +11,7 @@ SET(TESTS_DIR ${SOURCE_DIR}/test)
 SET(SOURCE_FILES geom.cpp main.cpp raytrace.cpp readAssimpFile.cpp realtime.cpp rgbe.cpp
     )
 SET(TESTABLE_SOURCES ray_shapes.cpp)
-SET(TEST_SOURCE ray_sphere.cpp)
+SET(TEST_SOURCE ray_sphere.cpp ray_aabb.cpp)
 SET(HEADER_FILES geom.h raytrace.h realtime.h rgbe.h ray_shapes.h material.h)
 
 #########################################################################
@@ -47,7 +47,7 @@ FOREACH(_FILE ${HEADER_FILES})
 ENDFOREACH()
 
 FOREACH(_FILE ${TEST_SOURCE})
-    LIST(APPEND TESTS ${TEST_DIR}/${_FILE})
+    LIST(APPEND TESTS ${TESTS_DIR}/${_FILE})
 ENDFOREACH()
 
 FOREACH(_FILE ${TESTABLE_SOURCES})
@@ -98,7 +98,7 @@ SET_TARGET_PROPERTIES(Raytracer PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOUR
 IF (GTEST_FOUND)
     ENABLE_TESTING()
 
-    ADD_EXECUTABLE(Tests ${TESTS_DIR}/ray_sphere.cpp $<TARGET_OBJECTS:Testable>)
+    ADD_EXECUTABLE(Tests ${TESTS} $<TARGET_OBJECTS:Testable>)
     TARGET_LINK_LIBRARIES(Tests
         PUBLIC
         ${GTEST_MAIN_LIBRARY}

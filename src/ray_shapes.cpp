@@ -49,4 +49,9 @@ bool Sphere::Intersect(const Ray& ray, Intersection& intersection)
 
     return true;
 }
+
+bool AABB::Intersect(const Ray& ray, Intersection& i)
+{
+    return false;
+};
 #pragma endregion
