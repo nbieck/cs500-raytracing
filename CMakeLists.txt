@@ -59,6 +59,7 @@ TARGET_INCLUDE_DIRECTORIES(Raytracer
     ${LIB_DIR}/freeglut
     ${LIB_DIR}
     ${Assimp_INCLUDE_DIR}
+    ${OPENGL_INCLUDE_DIR}
     ${SOURCE_DIR}
     )
 TARGET_COMPILE_DEFINITIONS(Raytracer

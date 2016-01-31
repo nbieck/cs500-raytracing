@@ -222,10 +222,10 @@ void applyMaterial(Material* mat, const unsigned int program)
     loc = glGetUniformLocation(program, "alpha");
     glUniform1f(loc, mat->alpha);
     
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, mat->texid);
-    loc = glGetUniformLocation(program, "tex");
-    glUniform1i(loc, 0);
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, mat->texid);
+//    loc = glGetUniformLocation(program, "tex");
+//    glUniform1i(loc, 0);
     
     loc = glGetUniformLocation(program, "emitter");
     glUniform1i(loc, 0);

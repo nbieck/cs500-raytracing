@@ -16,16 +16,13 @@ class Material
  public:
     Vector3 Kd, Ks;
     real alpha;
-    unsigned int texid;
 
     virtual bool isLight() { return false; }
 
-    Material()  : Kd(Vector3(1.0, 0.5, 0.0)), Ks(Vector3(1,1,1)), alpha(1.0), texid(0) {}
+    Material()  : Kd(Vector3(1.0, 0.5, 0.0)), Ks(Vector3(1,1,1)), alpha(1.0) {}
     Material(const Vector3 d, const Vector3 s, const real a) 
-        : Kd(d), Ks(s), alpha(a), texid(0) {}
-    Material(Material& o) { Kd=o.Kd;  Ks=o.Ks;  alpha=o.alpha;  texid=o.texid; }
-
-    void setTexture(const std::string path);
+        : Kd(d), Ks(s), alpha(a) {}
+    Material(Material& o) { Kd=o.Kd;  Ks=o.Ks;  alpha=o.alpha; }
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -72,10 +69,11 @@ public:
 // Scene
 class Realtime;
 
-class Scene {
+class Scene 
+{
 public:
     int width, height;
-    Realtime* realtime;         // Remove this (realtime stuff)
+//    Realtime* realtime;         // Remove this (realtime stuff)
     Material* currentMat;
 
     Scene();
