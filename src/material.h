@@ -9,7 +9,7 @@
 class Material
 {
  public:
-    Vector3 Kd, Ks;
+    Color Kd, Ks;
     real alpha;
 
     virtual bool isLight() { return false; }

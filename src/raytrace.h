@@ -57,6 +57,7 @@ public:
     std::shared_ptr<Material> currentMat;
     std::vector<std::shared_ptr<Shape>> objects;
     std::vector<std::shared_ptr<Shape>> lights;
+    std::vector<Vector3> light_pos; //temp - remove once we can do correct light
     Camera cam;
 
     Scene();

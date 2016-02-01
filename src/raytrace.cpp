@@ -119,7 +119,10 @@ void Scene::Command(const std::vector<std::string> strings,
                 currentMat);
 
         if (currentMat->isLight())
+        {
             lights.push_back(sphere);
+            light_pos.push_back(Vector3(f[1],f[2],f[3]));
+        }
 
         objects.push_back(sphere);
     }
@@ -134,7 +137,10 @@ void Scene::Command(const std::vector<std::string> strings,
                 currentMat);
 
         if (currentMat->isLight())
+        {
             lights.push_back(aabb);
+            light_pos.push_back(Vector3(f[1],f[2],f[3])+Vector3(f[4],f[5],f[6])/2);
+        }
 
         objects.push_back(aabb);
     }
@@ -190,7 +196,7 @@ void Scene::TraceImage(Color* image, const int pass)
     {
         for (int x=0;  x<width;  x++) 
         {
-            Color color;
+            Color color(0,0,0);
             
             Ray r = cam.MakeRay(width, height, x, y);
             Intersection i = CastRay(r);
@@ -203,7 +209,11 @@ void Scene::TraceImage(Color* image, const int pass)
             {
                 //color = i.obj->mat->Kd;
                 //color = Color(i.t, i.t, i.t);
-                color = i.n.cwiseAbs();
+                //color = i.n.cwiseAbs();
+                for (auto p : light_pos)
+                {
+                    color = color + i.obj->mat->Kd/PI * i.n.dot((p - i.p).normalized());
+                }
             }
 
             image[y*width + x] = color;
