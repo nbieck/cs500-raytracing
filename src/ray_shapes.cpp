@@ -172,8 +172,83 @@ bool AABB::Intersect(const Ray& ray, Intersection& i)
     return true;
 };
 
+Cylinder::Cylinder(Vector3 B, Vector3 A, real R, std::shared_ptr<Material> m)
+    : Shape(m)
+{
+    m_base = B;
+    m_h = A.norm();
+    m_r = R;
+    m_orient = Quaternion::FromTwoVectors(A.normalized(), Vector3::UnitZ());
+}
+
 bool Cylinder::Intersect(const Ray& ray, Intersection& i)
 {
-    return false;
+    Interval interval = std::make_pair(0,std::numeric_limits<real>::infinity());
+    Normals ns;
+
+    Ray conv_ray(m_orient._transformVector(ray.GetPos() - m_base), 
+            m_orient._transformVector(ray.GetDir()));
+
+    Interval slab;
+    Normals slab_n;
+    if (!IntersectRaySlab(conv_ray, Vector3(0,0,1), 0, -m_h, slab, slab_n))
+        return false;
+
+    if (slab.first > interval.first)
+    {
+        interval.first = slab.first;
+        ns.first = slab_n.first;
+    }
+    if (slab.second < interval.second)
+    {
+        interval.second = slab.second;
+        ns.second = slab_n.second;
+    }
+
+    Vector3 D = conv_ray.GetDir();
+    Vector3 Q = conv_ray.GetPos();
+    real a = D.x() * D.x() + D.y() * D.y();
+    real b = 2 * (D.x() * Q.x() + D.y() * Q.y());
+    real c = Q.x() * Q.x() + Q.y() * Q.y() - m_r * m_r;
+    real discriminant = b * b - 4 * a * c;
+    if (discriminant <= 0)
+        return false;
+
+    real root = std::sqrt(discriminant);
+    real t0 = (-b - root)/(2 * a);
+    real t1 = (-b + root)/(2 * a);
+
+    if (t0 > interval.first)
+    {
+        interval.first = t0;
+        Vector3 M = conv_ray.Eval(t0);
+        ns.first = Vector3(M.x(), M.y(), 0).normalized();
+    }
+    if (t1 < interval.second)
+    {
+        interval.second = t1;
+        Vector3 M = conv_ray.Eval(t1);
+        ns.second = Vector3(M.x(), M.y(), 0).normalized();
+    }
+
+    if (interval.second <= interval.first)
+        return false;
+
+    if (interval.first > 0)
+    {
+        i.t = interval.first;
+        i.n = ns.first;
+    }
+    else if (interval.second > 0)
+    {
+        i.t = interval.second;
+        i.n = ns.second;
+    }
+
+    i.n = m_orient.conjugate()._transformVector(i.n);
+    i.p = ray.Eval(i.t);
+    i.obj = this;
+
+    return true;
 }
 #pragma endregion

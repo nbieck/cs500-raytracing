@@ -76,12 +76,16 @@ class Cylinder : public Shape
 {
 public:
 
-    Cylinder(Vector3 B, Vector3 A, real R, std::shared_ptr<Material> m = nullptr)
-        :Shape(m) {}
+    Cylinder(Vector3 B, Vector3 A, real R, std::shared_ptr<Material> m = nullptr);
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
 
 private:
+
+    Vector3 m_base;
+    Quaternion m_orient;
+    real m_r;
+    real m_h;
 };
 
 class Triangle : public Shape

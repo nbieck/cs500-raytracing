@@ -148,7 +148,19 @@ void Scene::Command(const std::vector<std::string> strings,
     {
         // syntax: cylinder bx by bz   ax ay az  r
         // Creates a Shape instance for a cylinder defined by a base point, axis vector, and radius
+        auto cylinder = std::make_shared<Cylinder>(
+                Vector3(f[1],f[2],f[3]),
+                Vector3(f[4],f[5],f[6]),
+                f[7],
+                currentMat);
+        
+        if (currentMat->isLight())
+        {
+            lights.push_back(cylinder);
+            light_pos.push_back(Vector3(f[1],f[2],f[3])+Vector3(f[4],f[5],f[6])/2);
+        }
 
+        objects.push_back(cylinder);
     }
     else if (c == "mesh") 
     {
@@ -209,11 +221,11 @@ void Scene::TraceImage(Color* image, const int pass)
             {
                 //color = i.obj->mat->Kd;
                 //color = Color(i.t, i.t, i.t);
-                //color = i.n.cwiseAbs();
-                for (int j = 0; j < lights.size(); ++j)
-                {
-                    color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
-                }
+                color = i.n.cwiseAbs();
+                //for (int j = 0; j < lights.size(); ++j)
+                //{
+                //    color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
+                //}
             }
 
             image[y*width + x] = color;
