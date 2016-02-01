@@ -3,6 +3,8 @@
 #include "geom.h"
 #include "material.h"
 
+#include <memory>
+
 class Shape;
 
 struct Intersection
@@ -36,14 +38,18 @@ public:
     
     virtual bool Intersect(const Ray& ray, Intersection& intersection) = 0;
     
-    Material* mat;
+    std::shared_ptr<Material> mat;
+
+protected:
+    Shape(std::shared_ptr<Material> material)
+        : mat(material) {}
 };
 
 class Sphere : public Shape
 {
 public:
-    Sphere(Vector3 c, real r)
-        : m_c(c), m_r(r) {}
+    Sphere(Vector3 c, real r, std::shared_ptr<Material> mat = nullptr)
+        : Shape(mat), m_c(c), m_r(r) {}
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
 
@@ -57,7 +63,7 @@ class AABB : public Shape
 {
 public:
 
-    AABB(Vector3 c, Vector3 diag);
+    AABB(Vector3 c, Vector3 diag, std::shared_ptr<Material> mat = nullptr);
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
 

@@ -120,7 +120,8 @@ bool Sphere::Intersect(const Ray& ray, Intersection& intersection)
     return true;
 }
 
-AABB::AABB(Vector3 c, Vector3 diag)
+AABB::AABB(Vector3 c, Vector3 diag, std::shared_ptr<Material> mat)
+    : Shape(mat)
 {
     Vector3 c2 = c + diag;
 

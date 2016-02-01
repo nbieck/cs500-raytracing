@@ -127,4 +127,5 @@ int main(int argc, char** argv)
     WriteHdrImage(hdrName, scene->width, scene->height, image);
 
     delete scene;
+    delete[] image;
 }

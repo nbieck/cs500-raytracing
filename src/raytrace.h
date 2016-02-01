@@ -5,6 +5,12 @@
 
 #include "geom.h"
 #include "material.h"
+#include "ray_shapes.h"
+#include "camera.h"
+
+#include <memory>
+#include <vector>
+
 class Shape;
 
 const real PI = 3.14159f;
@@ -48,7 +54,10 @@ class Scene
 public:
     int width, height;
 //    Realtime* realtime;         // Remove this (realtime stuff)
-    Material* currentMat;
+    std::shared_ptr<Material> currentMat;
+    std::vector<std::shared_ptr<Shape>> objects;
+    std::vector<std::shared_ptr<Shape>> lights;
+    Camera cam;
 
     Scene();
     void Finit();
@@ -64,6 +73,10 @@ public:
     // Once ReadAssimpFile parses the information from the model file,
     // it will call:
     void triangleMesh(MeshData* mesh);
+
+    //casts a ray into the scene and returns the closest intersection
+    //t value will be infinite, if no intersection is found
+    Intersection CastRay(const Ray& ray);
 
     // The main program will call the TraceImage method to generate
     // and return the image.  This is the Ray Tracer!
