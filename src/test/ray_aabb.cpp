@@ -124,3 +124,22 @@ TEST(ray_aabb_intersection, ray_through_aabb_corner)
 
     ASSERT_TRUE(aabb.Intersect(ray, i));
 }
+
+TEST(ray_aabb_intersection, ray_starting_on_aabb_pointing_away)
+{
+    Ray ray(Vector3(0,1,0),Vector3(1,1,-1));
+    AABB aabb(Vector3(-1,-1,-1), Vector3(2,2,2));
+    Intersection i;
+
+    ASSERT_FALSE(aabb.Intersect(ray, i));
+}
+
+TEST(ray_aabb_intersection, ray_starting_on_aabb_pointing_inwards)
+{
+    Ray ray(Vector3(0,1,0),Vector3(1,-1,1));
+    AABB aabb(Vector3(-1,-1,-1), Vector3(2,2,2));
+    Intersection i;
+
+    ASSERT_TRUE(aabb.Intersect(ray, i));
+    ASSERT_FLOAT_EQ(sqrt(3), i.t);
+}

@@ -74,6 +74,14 @@ private:
 
 class Cylinder : public Shape
 {
+public:
+
+    Cylinder(Vector3 B, Vector3 A, real R, std::shared_ptr<Material> m = nullptr)
+        :Shape(m) {}
+
+    bool Intersect(const Ray& ray, Intersection& intersection) override;
+
+private:
 };
 
 class Triangle : public Shape

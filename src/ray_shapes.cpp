@@ -171,4 +171,9 @@ bool AABB::Intersect(const Ray& ray, Intersection& i)
 
     return true;
 };
+
+bool Cylinder::Intersect(const Ray& ray, Intersection& i)
+{
+    return false;
+}
 #pragma endregion

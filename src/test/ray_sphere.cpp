@@ -58,3 +58,22 @@ TEST(ray_sphere_intersections, ray_mising_sphere)
     
     ASSERT_FALSE(sphere.Intersect(ray, i));
 }
+
+TEST(ray_sphere_intersections, ray_starting_on_sphere_pointing_away)
+{
+    Ray ray(Vector3(1,0,0), Vector3(1,1,1));
+    Sphere sphere(Vector3(0,0,0), 1);
+    Intersection i;
+
+    ASSERT_FALSE(sphere.Intersect(ray, i));
+}
+
+TEST(ray_sphere_intersections, ray_starting_on_sphere_pointing_inwards)
+{
+    Ray ray(Vector3(0,1,0), Vector3(0,-1,0));
+    Sphere sphere(Vector3(0,0,0), 1);
+    Intersection i;
+
+    ASSERT_TRUE(sphere.Intersect(ray, i));
+    ASSERT_FLOAT_EQ(2,i.t);
+}

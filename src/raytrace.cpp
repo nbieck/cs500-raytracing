@@ -210,9 +210,9 @@ void Scene::TraceImage(Color* image, const int pass)
                 //color = i.obj->mat->Kd;
                 //color = Color(i.t, i.t, i.t);
                 //color = i.n.cwiseAbs();
-                for (auto p : light_pos)
+                for (int j = 0; j < lights.size(); ++j)
                 {
-                    color = color + i.obj->mat->Kd/PI * i.n.dot((p - i.p).normalized());
+                    color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
                 }
             }
 
