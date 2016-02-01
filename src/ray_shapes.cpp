@@ -28,7 +28,7 @@ bool Sphere::Intersect(const Ray& ray, Intersection& intersection)
     real Q_dot_Q = Q_mod.dot(Q_mod);
 
     real discriminant = Q_dot_D * Q_dot_D - Q_dot_Q + m_r * m_r;
-    if (discriminant < 0)
+    if (discriminant <= 0)
         return false;
 
     real root = std::sqrt(discriminant);
