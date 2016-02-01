@@ -27,28 +27,16 @@ Vector3 Ray::GetDir() const
 #pragma region Helper
 namespace
 {
-    Vector3 min(const Vector3& a, const Vector3& b)
-    {
-        return Vector3(std::min(a.x(), b.x()),
-                std::min(a.y(), b.y()),
-                std::min(a.z(), b.z()));
-    }
-
-    Vector3 max(const Vector3& a, const Vector3& b)
-    {
-        return Vector3(std::max(a.x(), b.x()),
-                std::max(a.y(), b.y()),
-                std::max(a.z(), b.z()));
-    }
-
     using Interval = std::pair<real, real>;
+    using Normals = std::pair<Vector3, Vector3>;
 
     bool IntersectRaySlab(
             const Ray& ray, 
             const Vector3& N, 
             real d0, 
             real d1, 
-            Interval& interval)
+            Interval& interval,
+            Normals& ns)
     {
         real divisor = N.dot(ray.GetDir());
         real N_dot_Q = N.dot(ray.GetPos());
@@ -61,9 +49,15 @@ namespace
             real t1 = -(d1 + N_dot_Q) / divisor;
 
             if (t0 < t1)
+            {
                 interval = std::make_pair(t0,t1);
+                ns = std::make_pair(-N,N);
+            }
             else
+            {
                 interval = std::make_pair(t1,t0);
+                ns = std::make_pair(N,-N);
+            }
         }
         else
         {
@@ -125,13 +119,14 @@ AABB::AABB(Vector3 c, Vector3 diag, std::shared_ptr<Material> mat)
 {
     Vector3 c2 = c + diag;
 
-    m_min = min(c2,c);
-    m_max = max(c2,c);
+    m_min = c2.cwiseMin(c);
+    m_max = c2.cwiseMax(c);
 }
 
 bool AABB::Intersect(const Ray& ray, Intersection& i)
 {
     Interval interval = std::make_pair(0,std::numeric_limits<real>::infinity());
+    Normals ns;
 
     for (int axis = 0; axis < 3; ++axis)
     {
@@ -140,20 +135,34 @@ bool AABB::Intersect(const Ray& ray, Intersection& i)
         float d1 = -m_max(axis);
 
         Interval slab;
-        IntersectRaySlab(ray, N, d0, d1, slab);
+        Normals slab_n;
+        IntersectRaySlab(ray, N, d0, d1, slab, slab_n);
 
-        interval = std::make_pair(
-                std::max(interval.first, slab.first),
-                std::min(interval.second, slab.second));
+        if (interval.first < slab.first)
+        {
+            interval.first = slab.first;
+            ns.first = slab_n.first;
+        }
+        if (interval.second > slab.second)
+        {
+            interval.second = slab.second;
+            ns.second = slab_n.second;
+        }
 
         if (interval.first >= interval.second)
             return false;
     }
 
     if (interval.first > 0)
+    {
         i.t = interval.first;
+        i.n = ns.first;
+    }
     else if (interval.second > 0)
+    {
         i.t = interval.second;
+        i.n = ns.second;
+    }
     else 
         return false;
     

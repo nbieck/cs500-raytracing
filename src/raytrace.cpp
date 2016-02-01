@@ -202,7 +202,8 @@ void Scene::TraceImage(Color* image, const int pass)
             else
             {
                 //color = i.obj->mat->Kd;
-                color = Color(i.t, i.t, i.t);
+                //color = Color(i.t, i.t, i.t);
+                color = i.n.cwiseAbs();
             }
 
             image[y*width + x] = color;
