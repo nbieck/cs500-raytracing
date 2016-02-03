@@ -114,6 +114,11 @@ bool Sphere::Intersect(const Ray& ray, Intersection& intersection)
     return true;
 }
 
+BBox Sphere::bounding_box()
+{
+    return BBox(m_c + Vector3(m_r,m_r,m_r), m_c - Vector3(m_r,m_r,m_r));
+}
+
 AABB::AABB(Vector3 c, Vector3 diag, std::shared_ptr<Material> mat)
     : Shape(mat)
 {
@@ -172,9 +177,15 @@ bool AABB::Intersect(const Ray& ray, Intersection& i)
     return true;
 };
 
+BBox AABB::bounding_box()
+{
+    return BBox(m_min, m_max);
+}
+
 Cylinder::Cylinder(Vector3 B, Vector3 A, real R, std::shared_ptr<Material> m)
     : Shape(m)
 {
+    m_axis = A;
     m_base = B;
     m_h = A.norm();
     m_r = R;
@@ -252,6 +263,16 @@ bool Cylinder::Intersect(const Ray& ray, Intersection& i)
     return true;
 }
 
+BBox Cylinder::bounding_box()
+{
+    BBox result(m_base + Vector3(m_r,m_r,m_r), m_base - Vector3(m_r,m_r,m_r));
+    Vector3 other_end = m_base + m_axis;
+    result.extend(m_axis + Vector3(m_r,m_r,m_r));
+    result.extend(m_axis - Vector3(m_r,m_r,m_r));
+
+    return result;
+}
+
 bool Triangle::Intersect(const Ray& ray, Intersection& i)
 {
     Vector3 e1 = m_v1 - m_v0;
@@ -278,8 +299,18 @@ bool Triangle::Intersect(const Ray& ray, Intersection& i)
     i.t = t;
     i.obj = this;
     i.p = ray.Eval(t);
-    i.n = e1.normalized().cross(e2.normalized());
+    i.n = (1 - u - v) * m_n0 + u * m_n1 + v * m_n2;
+    i.n.normalize();
 
     return true;
+}
+
+BBox Triangle::bounding_box()
+{
+    BBox result(m_v0);
+    result.extend(m_v1);
+    result.extend(m_v2);
+
+    return result;
 }
 #pragma endregion

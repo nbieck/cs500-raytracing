@@ -33,11 +33,26 @@ void Scene::Finit()
 
 void Scene::triangleMesh(MeshData* mesh) 
 { 
-
     if (mesh)
     {
         if (mesh->mat)
             delete mesh->mat;
+
+        for (auto v : mesh->triangles)
+        {
+            auto tri = std::make_shared<Triangle>(currentMat);
+
+            tri->m_v0 = mesh->vertices[v[0]].pnt;
+            tri->m_v1 = mesh->vertices[v[1]].pnt;
+            tri->m_v2 = mesh->vertices[v[2]].pnt;
+
+            tri->m_n0 = mesh->vertices[v[0]].nrm;
+            tri->m_n1 = mesh->vertices[v[1]].nrm;
+            tri->m_n2 = mesh->vertices[v[2]].nrm;
+
+            objects.push_back(tri);
+        }
+
         delete mesh;
     }
 }
@@ -169,10 +184,10 @@ void Scene::Command(const std::vector<std::string> strings,
         // model(s) from filename. All triangles are rotated by a
         // quaternion (qw qx qy qz), uniformly scaled by s, and
         // translated by (tx ty tz) .
-        //Matrix4 modelTr = translate(Vector3(f[2],f[3],f[4]))
-        //                  *scale(Vector3(f[5],f[5],f[5]))
-        //                  *toMat4(Orientation(6,strings,f));
-        //ReadAssimpFile(strings[1], modelTr);  
+        Matrix4 modelTr = translate(Vector3(f[2],f[3],f[4]))
+                          *scale(Vector3(f[5],f[5],f[5]))
+                          *toMat4(Orientation(6,strings,f));
+        ReadAssimpFile(strings[1], modelTr);  
     }
     else 
     {

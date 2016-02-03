@@ -12,7 +12,7 @@
 ///////////////////////////////////////////////////////////////////////
 using real = float;
 using Color = Eigen::Array<real,3,1>;
-using Bbox  = Eigen::AlignedBox<real,3>;
+using BBox  = Eigen::AlignedBox<real,3>;
 using Quaternion = Eigen::Quaternion<real>;
 using Matrix4 = Eigen::Matrix<real,4,4>;
 using Vector3 = Eigen::Matrix<real,3,1>;
