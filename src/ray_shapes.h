@@ -90,4 +90,13 @@ private:
 
 class Triangle : public Shape
 {
+public:
+    Triangle(Vector3 v0, Vector3 v1, Vector3 v2, std::shared_ptr<Material> mat = nullptr) 
+        : Shape(mat), m_v0(v0), m_v1(v1), m_v2(v2) {}
+
+    bool Intersect(const Ray& ray, Intersection& intersection) override;
+
+private:
+
+    Vector3 m_v0, m_v1, m_v2;
 };

@@ -202,10 +202,22 @@ Intersection Scene::CastRay(const Ray& ray)
 
 void Scene::TraceImage(Color* image, const int pass)
 {
+    enum class Output
+    {
+        Diffuse,
+        Depth,
+        Normal,
+        Position,
+        Lit
+    };
+
+    const Output o = Output::Lit;
 
 #pragma omp parallel for schedule(dynamic, 1) // Magic: Multi-thread y loop
     for (int y=0;  y<height;  y++) 
     {
+        fprintf(stderr, "Rendering %4d", y);
+
         for (int x=0;  x<width;  x++) 
         {
             Color color(0,0,0);
@@ -219,16 +231,32 @@ void Scene::TraceImage(Color* image, const int pass)
             }
             else
             {
-                //color = i.obj->mat->Kd;
-                //color = Color(i.t, i.t, i.t);
-                color = i.n.cwiseAbs();
-                //for (int j = 0; j < lights.size(); ++j)
-                //{
-                //    color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
-                //}
+                switch (o)
+                {
+                case Output::Diffuse:
+                    color = i.obj->mat->Kd;
+                    break;
+                case Output::Depth:
+                    color = Color(i.t, i.t, i.t);
+                    break;
+                case Output::Normal:
+                    color = i.n.cwiseAbs();
+                    break;
+                case Output::Position:
+                    color = i.p;
+                    break;
+                case Output::Lit:
+                    for (int j = 0; j < lights.size(); ++j)
+                    {
+                        color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
+                    }
+                    break;
+                }
             }
 
             image[y*width + x] = color;
         }
+
+        fprintf(stderr, "\n");
     }
 }

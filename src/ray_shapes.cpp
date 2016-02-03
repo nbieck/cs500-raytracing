@@ -251,4 +251,35 @@ bool Cylinder::Intersect(const Ray& ray, Intersection& i)
 
     return true;
 }
+
+bool Triangle::Intersect(const Ray& ray, Intersection& i)
+{
+    Vector3 e1 = m_v1 - m_v0;
+    Vector3 e2 = m_v2 - m_v0;
+    Vector3 p = ray.GetDir().cross(e2);
+    real d = p.dot(e1);
+    if (std::abs(d) < std::numeric_limits<real>::epsilon())
+        return false;
+
+    Vector3 S = ray.GetPos() - m_v0;
+    real u = p.dot(S) / d;
+    if (u <= 0 || u >= 1)
+        return false;
+
+    Vector3 q = S.cross(e1);
+    real v = (ray.GetDir().dot(q)) / d;
+    if (v <= 0 || (u + v) >= 1)
+        return false;
+
+    real t = e2.dot(q) / d;
+    if (t < 0)
+        return false;
+
+    i.t = t;
+    i.obj = this;
+    i.p = ray.Eval(t);
+    i.n = e1.normalized().cross(e2.normalized());
+
+    return true;
+}
 #pragma endregion
