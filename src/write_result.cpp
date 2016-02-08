@@ -1,5 +1,18 @@
 #include "write_result.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
+void MakePath(const std::string outName)
+{
+    size_t dir_loc = outName.find_first_of("/\\");
+    while (dir_loc != std::string::npos)
+    {
+        mkdir(outName.substr(0, dir_loc).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        dir_loc = outName.find_first_of("/\\", dir_loc + 1);
+    }
+}
+
 // Write the image as a HDR(RGBE) image.  
 #include "rgbe.h"
 void WriteHdrImage(const std::string outName, const int width, const int height, Color* image)
@@ -18,6 +31,7 @@ void WriteHdrImage(const std::string outName, const int width, const int height,
     rgbe_header_info info;
     char errbuf[100] = {0};
 
+    MakePath(outName);
     FILE* fp  =  fopen(outName.c_str(), "wb");
     info.valid = false;
     int r = RGBE_WriteHeader(fp, width, height, &info, errbuf);
