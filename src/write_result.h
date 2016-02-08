@@ -3,4 +3,5 @@
 #include "geom.h"
 #include <string>
 
-void WriteHdrImage(const std::string outName, const int width, const int height, Color* image);
+void WriteHdrImage(const std::string outName, const int width, const int height, Color* image,
+        real divisor = 1.0);

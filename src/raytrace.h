@@ -11,6 +11,10 @@
 #include <memory>
 #include <vector>
 
+#include <random>
+extern std::mt19937_64 RNGen;
+extern std::uniform_real_distribution<real> myrandom;
+
 class Shape;
 
 const real PI = 3.14159f;
@@ -45,6 +49,15 @@ struct MeshData
     Material *mat;
 };
 
+enum class Output
+{
+    Diffuse,
+    Depth,
+    Normal,
+    Position,
+    Lit,
+    Trace
+};
 ////////////////////////////////////////////////////////////////////////////////
 // Scene
 class Realtime;
@@ -79,6 +92,10 @@ public:
     //casts a ray into the scene and returns the closest intersection
     //t value will be infinite, if no intersection is found
     Intersection CastRay(const Ray& ray);
+
+    Color Raycast(const Ray& ray, Output output);
+
+    Color Pathtrace(const Ray& ray);
 
     // The main program will call the TraceImage method to generate
     // and return the image.  This is the Ray Tracer!

@@ -25,14 +25,15 @@ DEFINE_string(type, "trace",
 DEFINE_string(out_base, "",
         "Specify the base name for the generated output file. If empty, the name of the "
         "specified scene file will be used (without the .scn) extension");
+DEFINE_double(russian_roulette, 0.8, "The russian roulette value that determines whether we continue tracing a ray. Should be between 0 and 1");
+DEFINE_int32(dump_rate, 8, "The application will dump images at powers of this number when raytracing");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 // A good quality *thread-safe* Mersenne Twister random number generator.
-#include <random>
 std::mt19937_64 RNGen;
-std::uniform_real_distribution<> myrandom(0.0, 1.0);
+std::uniform_real_distribution<real> myrandom(0.0, 1.0);
 // Call myrandom(RNGen) to get a uniformly distributed random number in [0,1].
 
 Scene::Scene() 
@@ -232,17 +233,110 @@ Intersection Scene::CastRay(const Ray& ray)
     return min.min_i;
 }
 
+Color Scene::Raycast(const Ray& ray, Output output)
+{
+    Color color = Color(0,0,0);
+    Intersection i = CastRay(ray);
+
+    if (std::isinf(i.t))
+    {
+        color = Color(0,0,0);
+    }
+    else
+    {
+        switch (output)
+        {
+            case Output::Diffuse:
+                color = i.obj->mat->Kd;
+                break;
+            case Output::Depth:
+                color = Color(i.t, i.t, i.t);
+                break;
+            case Output::Normal:
+                color = i.n.cwiseAbs();
+                break;
+            case Output::Position:
+                color = i.p;
+                break;
+            case Output::Lit:
+                for (int j = 0; j < lights.size(); ++j)
+                {
+                    color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    return color;
+}
+
+Vector3 SampleLobe(Vector3 N, real cTheta, real Phi)
+{
+    real sTheta = std::sqrt(1 - cTheta * cTheta);
+    Vector3 K = Vector3(sTheta * std::cos(Phi), sTheta * sin(Phi), cTheta);
+    Quaternion q = Quaternion::FromTwoVectors(Vector3::UnitZ(), N);
+    return q._transformVector(K);
+}
+
+Vector3 SampleBRDF(const Intersection& i)
+{
+    return SampleLobe(i.n, std::sqrt(myrandom(RNGen)), 2.0 * PI * myrandom(RNGen));
+}
+
+real PDF_BRDF(const Intersection& i, const Vector3& w_i)
+{
+    return i.n.dot(w_i) / PI;
+}
+
+Color EvalBRDF(const Intersection& i)
+{
+    return i.obj->mat->Kd / PI;
+}
+
+Color Scene::Pathtrace(const Ray& ray)
+{
+    Color result = Color(0,0,0);
+    Color weight = Color(1,1,1);
+
+    Intersection i = CastRay(ray);
+    if (std::isinf(i.t))
+        return Color(0,0,0);
+    if (i.obj->mat->isLight())
+    {
+        return i.obj->mat->Kd;
+    }
+
+    while (myrandom(RNGen) < FLAGS_russian_roulette)
+    {
+        //explicit light goes here
+        
+        //keep tracing
+        Vector3 w_i = SampleBRDF(i);
+        Intersection i2 = CastRay(Ray(i.p, w_i));
+        if (std::isinf(i2.t))
+            return result;
+
+        Color f = i.n.dot(w_i) * EvalBRDF(i);
+        real p = PDF_BRDF(i,w_i) * FLAGS_russian_roulette;
+        weight *= f/p;
+
+        if (i2.obj->mat->isLight())
+        {
+            result += weight * i2.obj->mat->Kd;
+            return result;
+        }
+
+        i = i2;
+    }
+
+    return result;
+}
+
 void Scene::TraceImage(Color* image, const int pass)
 {
-    enum class Output
-    {
-        Diffuse,
-        Depth,
-        Normal,
-        Position,
-        Lit,
-        Trace
-    };
+    cam.SetDims(width, height);
 
     Output o = Output::Trace;
     if (FLAGS_type == "normal")
@@ -260,6 +354,8 @@ void Scene::TraceImage(Color* image, const int pass)
 
     object_tree = Eigen::KdBVH<real, 3, std::shared_ptr<Shape>>(objects.begin(), objects.end());
 
+    int iterations = 0;
+    int output_it = 1;
     //infinite loop for fun and profit
     while (true)
     {
@@ -270,47 +366,34 @@ void Scene::TraceImage(Color* image, const int pass)
             {
                 Color color(0,0,0);
                 
-                Ray r = cam.MakeRay(width, height, x, y);
-                Intersection i = CastRay(r);
+                Ray r = Ray(Vector3(), Vector3());
+                if (o != Output::Trace)
+                   r = cam.MakeRay(x, y);
+                else 
+                   r = cam.MakeRayAA(x, y);
 
-                if (std::isinf(i.t))
-                {
-                    color = Color(0,0,0);
-                }
-                else
-                {
-                    switch (o)
-                    {
-                    case Output::Diffuse:
-                        color = i.obj->mat->Kd;
-                        break;
-                    case Output::Depth:
-                        color = Color(i.t, i.t, i.t);
-                        break;
-                    case Output::Normal:
-                        color = i.n.cwiseAbs();
-                        break;
-                    case Output::Position:
-                        color = i.p;
-                        break;
-                    case Output::Lit:
-                        for (int j = 0; j < lights.size(); ++j)
-                        {
-                            color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
-                        }
-                        break;
-                    case Output::Trace:
-                        break;
-                    }
-                }
+                if (o != Output::Trace)
+                    color = Raycast(r, o);
+                else 
+                    color = Pathtrace(r);
 
-                image[y*width + x] = color;
+                image[y*width + x] += color;
             }
         }
 
         //only loop if we are tracing
         if (o != Output::Trace)
             break;
+
+        iterations++;
+        if (iterations == output_it)
+        {
+            std::ostringstream os;
+            os << "_" << iterations;
+            WriteHdrImage(FLAGS_out_base + os.str() + ".hdr", width, height, image, static_cast<real>(iterations));
+            std::cout << "Writing " + FLAGS_out_base + os.str() + ".hdr" << std::endl;
+            output_it *= FLAGS_dump_rate;
+        }
     }
 
     std::string extension;
