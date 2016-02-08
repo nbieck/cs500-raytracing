@@ -11,15 +11,20 @@
 #include "raytrace.h"
 #include "realtime.h"
 #include "minimizer.h"
+#include "write_result.h"
 
 #include <gflags/gflags.h>
 DEFINE_string(type, "trace",
         "Specify the type of output to be generated. Valid values are:\n"
-        "normal -- raycast and output the normal of intersection\n"
-        "depth -- raycast and output the depth of intersection\n"
-        "color -- raycast and output the base color of the hit object\n"
-        "lit -- raycast and analytically compute direct lighting\n"
-        "trace -- do full pathtrace\n");
+        "normal -- raycast and output the normal of intersection, output is written to out_base_n.hdr\n"
+        "depth -- raycast and output the depth of intersection. output to out_base_d.hdr\n"
+        "color -- raycast and output the base color of the hit object, output to out_base_c.hdr\n"
+        "lit -- raycast and analytically compute direct lighting, output to out_base_l.hdr\n"
+        "trace -- do full pathtrace. This will enter an infinite loop and periodically output "
+        "images. Outputs will be written to out_base_#iterations.hdr");
+DEFINE_string(out_base, "",
+        "Specify the base name for the generated output file. If empty, the name of the "
+        "specified scene file will be used (without the .scn) extension");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -307,4 +312,25 @@ void Scene::TraceImage(Color* image, const int pass)
         if (o != Output::Trace)
             break;
     }
+
+    std::string extension;
+    switch (o)
+    {
+    case Output::Normal:
+        extension = "_n";
+        break;
+    case Output::Depth:
+        extension = "_d";
+        break;
+    case Output::Diffuse:
+        extension = "_c";
+        break;
+    case Output::Lit:
+        extension = "_l";
+        break;
+    default:
+        break;
+    }
+
+    WriteHdrImage(FLAGS_out_base + extension + ".hdr", width, height, image);
 }

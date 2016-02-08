@@ -9,11 +9,11 @@ SET(LIB_DIR ${CMAKE_SOURCE_DIR}/libs)
 SET(TESTS_DIR ${SOURCE_DIR}/test)
 
 SET(SOURCE_FILES geom.cpp main.cpp raytrace.cpp readAssimpFile.cpp realtime.cpp rgbe.cpp
-    camera.cpp minimizer.cpp)
+    camera.cpp minimizer.cpp write_result.cpp)
 SET(TESTABLE_SOURCES ray_shapes.cpp)
 SET(TEST_SOURCE ray_sphere.cpp ray_aabb.cpp ray_cylinder.cpp ray_triangle.cpp)
 SET(HEADER_FILES geom.h raytrace.h realtime.h rgbe.h ray_shapes.h material.h camera.h
-    minimizer.h)
+    minimizer.h write_result.h)
 
 #########################################################################
 #find necessary libraries
