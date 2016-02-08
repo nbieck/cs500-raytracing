@@ -25,61 +25,55 @@ Vector3 Ray::GetDir() const
 #pragma endregion
 
 #pragma region Helper
-namespace
+bool IntersectRaySlab(
+        const Ray& ray, 
+        const Vector3& N, 
+        real d0, 
+        real d1, 
+        Interval& interval,
+        Normals& ns)
 {
-    using Interval = std::pair<real, real>;
-    using Normals = std::pair<Vector3, Vector3>;
+    real divisor = N.dot(ray.GetDir());
+    real N_dot_Q = N.dot(ray.GetPos());
 
-    bool IntersectRaySlab(
-            const Ray& ray, 
-            const Vector3& N, 
-            real d0, 
-            real d1, 
-            Interval& interval,
-            Normals& ns)
+    if (std::abs(divisor) > std::numeric_limits<real>::epsilon())
     {
-        real divisor = N.dot(ray.GetDir());
-        real N_dot_Q = N.dot(ray.GetPos());
+        //ray goes through both planes
 
-        if (std::abs(divisor) > std::numeric_limits<real>::epsilon())
+        real t0 = -(d0 + N_dot_Q) / divisor;
+        real t1 = -(d1 + N_dot_Q) / divisor;
+
+        if (t0 < t1)
         {
-            //ray goes through both planes
-
-            real t0 = -(d0 + N_dot_Q) / divisor;
-            real t1 = -(d1 + N_dot_Q) / divisor;
-
-            if (t0 < t1)
-            {
-                interval = std::make_pair(t0,t1);
-                ns = std::make_pair(-N,N);
-            }
-            else
-            {
-                interval = std::make_pair(t1,t0);
-                ns = std::make_pair(N,-N);
-            }
+            interval = std::make_pair(t0,t1);
+            ns = std::make_pair(-N,N);
         }
         else
         {
-            //ray parallel to planes
-            real s0 = N_dot_Q + d0;
-            real s1 = N_dot_Q + d1;
-
-            if (std::signbit(s0) == std::signbit(s1))
-            {
-                //ray outside slab
-                interval = std::make_pair(1,0);
-                return false;
-            }
-            else
-            {
-                //ray inside slab
-                interval = std::make_pair(0, std::numeric_limits<real>::infinity());
-            }
+            interval = std::make_pair(t1,t0);
+            ns = std::make_pair(N,-N);
         }
-
-        return true;
     }
+    else
+    {
+        //ray parallel to planes
+        real s0 = N_dot_Q + d0;
+        real s1 = N_dot_Q + d1;
+
+        if (std::signbit(s0) == std::signbit(s1))
+        {
+            //ray outside slab
+            interval = std::make_pair(1,0);
+            return false;
+        }
+        else
+        {
+            //ray inside slab
+            interval = std::make_pair(0, std::numeric_limits<real>::infinity());
+        }
+    }
+
+    return true;
 }
 #pragma endregion
 
@@ -114,9 +108,9 @@ bool Sphere::Intersect(const Ray& ray, Intersection& intersection)
     return true;
 }
 
-BBox Sphere::bounding_box()
+BBox Sphere::bounding_box() const
 {
-    return BBox(m_c + Vector3(m_r,m_r,m_r), m_c - Vector3(m_r,m_r,m_r));
+    return BBox(m_c - Vector3(m_r,m_r,m_r), m_c + Vector3(m_r,m_r,m_r));
 }
 
 AABB::AABB(Vector3 c, Vector3 diag, std::shared_ptr<Material> mat)
@@ -177,7 +171,7 @@ bool AABB::Intersect(const Ray& ray, Intersection& i)
     return true;
 };
 
-BBox AABB::bounding_box()
+BBox AABB::bounding_box() const
 {
     return BBox(m_min, m_max);
 }
@@ -263,9 +257,9 @@ bool Cylinder::Intersect(const Ray& ray, Intersection& i)
     return true;
 }
 
-BBox Cylinder::bounding_box()
+BBox Cylinder::bounding_box() const
 {
-    BBox result(m_base + Vector3(m_r,m_r,m_r), m_base - Vector3(m_r,m_r,m_r));
+    BBox result(m_base - Vector3(m_r,m_r,m_r), m_base + Vector3(m_r,m_r,m_r));
     Vector3 other_end = m_base + m_axis;
     result.extend(m_axis + Vector3(m_r,m_r,m_r));
     result.extend(m_axis - Vector3(m_r,m_r,m_r));
@@ -305,7 +299,7 @@ bool Triangle::Intersect(const Ray& ray, Intersection& i)
     return true;
 }
 
-BBox Triangle::bounding_box()
+BBox Triangle::bounding_box() const
 {
     BBox result(m_v0);
     result.extend(m_v1);

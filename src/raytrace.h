@@ -55,6 +55,7 @@ public:
     int width, height;
 //    Realtime* realtime;         // Remove this (realtime stuff)
     std::shared_ptr<Material> currentMat;
+    Eigen::KdBVH<real, 3, std::shared_ptr<Shape>> object_tree;
     std::vector<std::shared_ptr<Shape>> objects;
     std::vector<std::shared_ptr<Shape>> lights;
     std::vector<Vector3> light_pos; //temp - remove once we can do correct light

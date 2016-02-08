@@ -9,6 +9,7 @@ class Shape;
 
 struct Intersection
 {
+    Intersection() : t(std::numeric_limits<real>::infinity()) {}
     real t;
     Vector3 p;
     Vector3 n;
@@ -37,7 +38,7 @@ class Shape
 public:
     
     virtual bool Intersect(const Ray& ray, Intersection& intersection) = 0;
-    virtual BBox bounding_box() = 0;
+    virtual BBox bounding_box() const = 0;
     
     std::shared_ptr<Material> mat;
 
@@ -53,7 +54,7 @@ public:
         : Shape(mat), m_c(c), m_r(r) {}
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
-    BBox bounding_box() override;
+    BBox bounding_box() const override;
 
 private:
 
@@ -68,7 +69,7 @@ public:
     AABB(Vector3 c, Vector3 diag, std::shared_ptr<Material> mat = nullptr);
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
-    BBox bounding_box() override;
+    BBox bounding_box() const override;
 
 private:
     Vector3 m_min;
@@ -82,7 +83,7 @@ public:
     Cylinder(Vector3 B, Vector3 A, real R, std::shared_ptr<Material> m = nullptr);
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
-    BBox bounding_box() override;
+    BBox bounding_box() const override;
 
 private:
 
@@ -102,8 +103,19 @@ public:
         : Shape(mat), m_v0(v0), m_v1(v1), m_v2(v2) {}
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
-    BBox bounding_box() override;
+    BBox bounding_box() const override;
 
     Vector3 m_v0, m_v1, m_v2;
     Vector3 m_n0, m_n1, m_n2;
 };
+
+using Interval = std::pair<real, real>;
+using Normals = std::pair<Vector3, Vector3>;
+
+bool IntersectRaySlab(
+        const Ray& ray, 
+        const Vector3& N, 
+        real d0, 
+        real d1, 
+        Interval& interval,
+        Normals& ns);

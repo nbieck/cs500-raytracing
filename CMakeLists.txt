@@ -9,10 +9,11 @@ SET(LIB_DIR ${CMAKE_SOURCE_DIR}/libs)
 SET(TESTS_DIR ${SOURCE_DIR}/test)
 
 SET(SOURCE_FILES geom.cpp main.cpp raytrace.cpp readAssimpFile.cpp realtime.cpp rgbe.cpp
-    camera.cpp)
+    camera.cpp minimizer.cpp)
 SET(TESTABLE_SOURCES ray_shapes.cpp)
 SET(TEST_SOURCE ray_sphere.cpp ray_aabb.cpp ray_cylinder.cpp ray_triangle.cpp)
-SET(HEADER_FILES geom.h raytrace.h realtime.h rgbe.h ray_shapes.h material.h camera.h)
+SET(HEADER_FILES geom.h raytrace.h realtime.h rgbe.h ray_shapes.h material.h camera.h
+    minimizer.h)
 
 #########################################################################
 #find necessary libraries
@@ -63,6 +64,7 @@ SET(INC_DIRS
     ${Assimp_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${SOURCE_DIR}
+    /usr/include
     )
 SET(DEFS 
     -DEIGEN_NO_DEBUG
@@ -75,14 +77,17 @@ TARGET_INCLUDE_DIRECTORIES(Testable PUBLIC ${INC_DIRS})
 TARGET_COMPILE_DEFINITIONS(Testable PUBLIC ${DEFS})
 TARGET_COMPILE_OPTIONS(Testable PUBLIC ${OPTS})
 
+MESSAGE(STATUS ${OPENGL_gl_LIBRARY})
+
 
 ADD_EXECUTABLE(Raytracer ${FULL_SOURCE} $<TARGET_OBJECTS:Testable>)
-TARGET_LINK_LIBRARIES(Raytracer 
+TARGET_LINK_LIBRARIES(Raytracer PUBLIC
     ${Assimp_LIB} 
     ${GLBINDING_LOC} 
     ${FREEGLUT_LOC} 
     ${X11_LIBRARIES}
     ${OPENGL_gl_LIBRARY}
+    gflags
     -fopenmp)
 TARGET_INCLUDE_DIRECTORIES(Raytracer
     PUBLIC

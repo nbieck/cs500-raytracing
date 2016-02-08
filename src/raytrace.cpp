@@ -10,6 +10,16 @@
 #include "geom.h"
 #include "raytrace.h"
 #include "realtime.h"
+#include "minimizer.h"
+
+#include <gflags/gflags.h>
+DEFINE_string(type, "trace",
+        "Specify the type of output to be generated. Valid values are:\n"
+        "normal -- raycast and output the normal of intersection\n"
+        "depth -- raycast and output the depth of intersection\n"
+        "color -- raycast and output the base color of the hit object\n"
+        "lit -- raycast and analytically compute direct lighting\n"
+        "trace -- do full pathtrace\n");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -199,9 +209,10 @@ void Scene::Command(const std::vector<std::string> strings,
 
 Intersection Scene::CastRay(const Ray& ray)
 {
-    Intersection result;
-    result.t = std::numeric_limits<real>::infinity();
+    Minimizer min(ray);
+    real mindist = BVMinimize(object_tree, min);
 
+    /*
     for (auto s : objects)
     {
         Intersection test;
@@ -211,8 +222,9 @@ Intersection Scene::CastRay(const Ray& ray)
                 result = test;
         }
     }
+    */
 
-    return result;
+    return min.min_i;
 }
 
 void Scene::TraceImage(Color* image, const int pass)
@@ -223,55 +235,76 @@ void Scene::TraceImage(Color* image, const int pass)
         Depth,
         Normal,
         Position,
-        Lit
+        Lit,
+        Trace
     };
 
-    const Output o = Output::Lit;
+    Output o = Output::Trace;
+    if (FLAGS_type == "normal")
+        o = Output::Normal;
+    else if (FLAGS_type == "depth")
+        o = Output::Depth;
+    else if (FLAGS_type == "color")
+        o = Output::Diffuse;
+    else if (FLAGS_type == "lit")
+        o = Output::Lit;
+    else if (FLAGS_type == "trace")
+        o = Output::Trace;
+    else
+        std::cerr << "Unknown value for option \"type\"" << std::endl;
 
-#pragma omp parallel for schedule(dynamic, 1) // Magic: Multi-thread y loop
-    for (int y=0;  y<height;  y++) 
+    object_tree = Eigen::KdBVH<real, 3, std::shared_ptr<Shape>>(objects.begin(), objects.end());
+
+    //infinite loop for fun and profit
+    while (true)
     {
-        fprintf(stderr, "Rendering %4d", y);
-
-        for (int x=0;  x<width;  x++) 
+#pragma omp parallel for schedule(dynamic, 1) // Magic: Multi-thread y loop
+        for (int y=0;  y<height;  y++) 
         {
-            Color color(0,0,0);
-            
-            Ray r = cam.MakeRay(width, height, x, y);
-            Intersection i = CastRay(r);
+            for (int x=0;  x<width;  x++) 
+            {
+                Color color(0,0,0);
+                
+                Ray r = cam.MakeRay(width, height, x, y);
+                Intersection i = CastRay(r);
 
-            if (std::isinf(i.t))
-            {
-                color = Color(0,0,0);
-            }
-            else
-            {
-                switch (o)
+                if (std::isinf(i.t))
                 {
-                case Output::Diffuse:
-                    color = i.obj->mat->Kd;
-                    break;
-                case Output::Depth:
-                    color = Color(i.t, i.t, i.t);
-                    break;
-                case Output::Normal:
-                    color = i.n.cwiseAbs();
-                    break;
-                case Output::Position:
-                    color = i.p;
-                    break;
-                case Output::Lit:
-                    for (int j = 0; j < lights.size(); ++j)
-                    {
-                        color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
-                    }
-                    break;
+                    color = Color(0,0,0);
                 }
-            }
+                else
+                {
+                    switch (o)
+                    {
+                    case Output::Diffuse:
+                        color = i.obj->mat->Kd;
+                        break;
+                    case Output::Depth:
+                        color = Color(i.t, i.t, i.t);
+                        break;
+                    case Output::Normal:
+                        color = i.n.cwiseAbs();
+                        break;
+                    case Output::Position:
+                        color = i.p;
+                        break;
+                    case Output::Lit:
+                        for (int j = 0; j < lights.size(); ++j)
+                        {
+                            color = color + lights[j]->mat->Kd * i.obj->mat->Kd/PI * i.n.dot((light_pos[j] - i.p).normalized());
+                        }
+                        break;
+                    case Output::Trace:
+                        break;
+                    }
+                }
 
-            image[y*width + x] = color;
+                image[y*width + x] = color;
+            }
         }
 
-        fprintf(stderr, "\n");
+        //only loop if we are tracing
+        if (o != Output::Trace)
+            break;
     }
 }

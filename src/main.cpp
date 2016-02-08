@@ -22,6 +22,7 @@
     // Includes for Linux
     #include <stdlib.h>
     #include <time.h> 
+    #include <gflags/gflags.h>
 #endif
 
 #include "geom.h"
@@ -96,6 +97,11 @@ void WriteHdrImage(const std::string outName, const int width, const int height,
 ////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
+    std::string usage = "Takes a scene definition file and produces a raytraced image.";
+
+    google::SetUsageMessage(usage);
+    google::ParseCommandLineFlags(&argc, &argv, true);
+
     if (argc < 2)
     {
         std::cout << "Please provide a scene file to render" << std::endl;
