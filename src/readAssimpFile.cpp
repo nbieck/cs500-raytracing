@@ -26,7 +26,7 @@ void Scene::ReadAssimpFile(const std::string& path, const Matrix4& M)
                         M(2,0), M(2,1), M(2,2), M(2,3),
                         M(3,0), M(3,1), M(3,2), M(3,3));
     
-    printf("Reading %s\n", path.c_str()); 
+//    printf("Reading %s\n", path.c_str()); 
     Assimp::Importer importer;
     const aiScene* aiscene = importer.ReadFile(path.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
     recurseModelNodes(this, aiscene, aiscene->mRootNode, modelTr);
@@ -44,8 +44,8 @@ void recurseModelNodes(Scene* scene,
                        const int level)
 {
     // Print line with indentation to show structure of the model node hierarchy.
-    for (int i=0;  i<level;  i++) printf("| ");
-    printf("%s ", node->mName.data);
+   // for (int i=0;  i<level;  i++) printf("| ");
+    //printf("%s ", node->mName.data);
 
     // Accumulating transformations while traversing down the hierarchy.
     aiMatrix4x4 childTr = parentTr*node->mTransformation;
@@ -54,7 +54,7 @@ void recurseModelNodes(Scene* scene,
     // Loop through this node's meshes
     for (unsigned int i=0;  i<node->mNumMeshes; ++i) {
         aiMesh* aimesh = aiscene->mMeshes[node->mMeshes[i]];
-        printf("%d:%d ", aimesh->mNumVertices, aimesh->mNumFaces);
+  //      printf("%d:%d ", aimesh->mNumVertices, aimesh->mNumFaces);
 
         // Extract this node's surface material.
         aiString texPath;
@@ -107,7 +107,7 @@ void recurseModelNodes(Scene* scene,
         
         scene->triangleMesh(meshdata); }
 
-    printf("\n");
+ //   printf("\n");
 
     // Recurse onto this node's children
     for (unsigned int i=0;  i<node->mNumChildren;  ++i)
