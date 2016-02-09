@@ -5,6 +5,8 @@
 
 #include <memory>
 
+const real PI = 3.14159f;
+
 class Shape;
 
 struct Intersection
@@ -13,7 +15,7 @@ struct Intersection
     real t;
     Vector3 p;
     Vector3 n;
-    Shape* obj;
+    const Shape* obj;
 };
 
 class Ray
@@ -40,6 +42,8 @@ public:
     virtual bool Intersect(const Ray& ray, Intersection& intersection) = 0;
     virtual BBox bounding_box() const = 0;
     
+    virtual real surface() const {return 0;}
+    virtual Intersection sample() const {return Intersection();}
     std::shared_ptr<Material> mat;
 
 protected:
@@ -56,6 +60,8 @@ public:
     bool Intersect(const Ray& ray, Intersection& intersection) override;
     BBox bounding_box() const override;
 
+    real surface() const override {return static_cast<real>(4) * PI * m_r * m_r;}
+    Intersection sample() const override;
 private:
 
     Vector3 m_c;
@@ -84,6 +90,7 @@ public:
 
     bool Intersect(const Ray& ray, Intersection& intersection) override;
     BBox bounding_box() const override;
+
 
 private:
 

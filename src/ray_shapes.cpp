@@ -1,4 +1,5 @@
 #include "ray_shapes.h"
+#include "raytrace.h"
 
 #include <utility>
 #include <limits>
@@ -111,6 +112,20 @@ bool Sphere::Intersect(const Ray& ray, Intersection& intersection)
 BBox Sphere::bounding_box() const
 {
     return BBox(m_c - Vector3(m_r,m_r,m_r), m_c + Vector3(m_r,m_r,m_r));
+}
+
+Intersection Sphere::sample() const
+{
+    real z = 2 * myrandom(RNGen) - 1;
+    real r = std::sqrt(1 - z * z);
+    real a = 2 * PI * myrandom(RNGen);
+
+    Intersection result;
+    result.n = Vector3(r*cos(a),r*sin(a), z);
+    result.p = m_c + m_r * result.n;
+    result.obj = this;
+
+    return result;
 }
 
 AABB::AABB(Vector3 c, Vector3 diag, std::shared_ptr<Material> mat)

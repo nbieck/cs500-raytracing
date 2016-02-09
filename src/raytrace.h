@@ -17,7 +17,6 @@ extern std::uniform_real_distribution<real> myrandom;
 
 class Shape;
 
-const real PI = 3.14159f;
 const real Radians = PI/180.0f;    // Convert degrees to radians
 
 ////////////////////////////////////////////////////////////////////////
@@ -92,6 +91,10 @@ public:
     //casts a ray into the scene and returns the closest intersection
     //t value will be infinite, if no intersection is found
     Intersection CastRay(const Ray& ray);
+
+    Intersection SampleLight();
+
+    real PDFLight(const Intersection& i);
 
     Color Raycast(const Ray& ray, Output output);
 

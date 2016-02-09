@@ -27,6 +27,7 @@ DEFINE_string(out_base, "",
         "specified scene file will be used (without the .scn) extension");
 DEFINE_double(russian_roulette, 0.8, "The russian roulette value that determines whether we continue tracing a ray. Should be between 0 and 1");
 DEFINE_int32(dump_rate, 8, "The application will dump images at powers of this number when raytracing");
+DEFINE_bool(explicit, true, "Include the explicit light connection in the path tracing algorithm.");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -295,6 +296,25 @@ Color EvalBRDF(const Intersection& i)
     return i.obj->mat->Kd / PI;
 }
 
+Intersection Scene::SampleLight()
+{
+    std::uniform_int_distribution<int> dist(0, lights.size() - 1);
+
+    int light = dist(RNGen);
+    return lights[light]->sample();
+}
+
+real Scene::PDFLight(const Intersection& i)
+{
+    return static_cast<real>(1) / (i.obj->surface() * lights.size());
+}
+
+real GeometryTerm(const Intersection& a, const Intersection& b)
+{
+    Vector3 D = a.p - b.p;
+    return std::abs((a.n.dot(D) * b.n.dot(D)) / (D.dot(D) * D.dot(D)));
+}
+
 Color Scene::Pathtrace(const Ray& ray)
 {
     Color result = Color(0,0,0);
@@ -311,6 +331,18 @@ Color Scene::Pathtrace(const Ray& ray)
     while (myrandom(RNGen) < FLAGS_russian_roulette)
     {
         //explicit light goes here
+        if (FLAGS_explicit)
+        {
+            Intersection L = SampleLight();
+            real p = PDFLight(L) * GeometryTerm(i,L);
+            Vector3 w_i = (L.p - i.p).normalized();
+            Intersection LI = CastRay(Ray(i.p, w_i));
+            if (p > 0 && !std::isinf(LI.t) && LI.obj == L.obj && LI.p.isApprox(L.p))
+            {
+                Color f = (i.n.dot(w_i)) * EvalBRDF(i);
+                result += weight * f/p * LI.obj->mat->Kd;
+            }
+        }
         
         //keep tracing
         Vector3 w_i = SampleBRDF(i);
