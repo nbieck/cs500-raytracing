@@ -28,6 +28,8 @@ DEFINE_string(out_base, "",
 DEFINE_double(russian_roulette, 0.8, "The russian roulette value that determines whether we continue tracing a ray. Should be between 0 and 1");
 DEFINE_int32(dump_rate, 8, "The application will dump images at powers of this number when raytracing");
 DEFINE_bool(explicit, true, "Include the explicit light connection in the path tracing algorithm.");
+DEFINE_bool(MIS, true, "Include multiple-importance-sampling. Implies explicit light connection.");
+DEFINE_bool(AA, true, "Do basic AA by picking ray randomly over full pixel area");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -334,13 +336,19 @@ Color Scene::Pathtrace(const Ray& ray)
         if (FLAGS_explicit)
         {
             Intersection L = SampleLight();
-            real p = PDFLight(L) * GeometryTerm(i,L);
+            real p = PDFLight(L) / GeometryTerm(i,L);
             Vector3 w_i = (L.p - i.p).normalized();
             Intersection LI = CastRay(Ray(i.p, w_i));
             if (p > 0 && !std::isinf(LI.t) && LI.obj == L.obj && LI.p.isApprox(L.p))
             {
                 Color f = (i.n.dot(w_i)) * EvalBRDF(i);
-                result += weight * f/p * LI.obj->mat->Kd;
+                real MIS = static_cast<real>(1);
+                if (FLAGS_MIS)
+                {
+                    real q = PDF_BRDF(i, w_i) * FLAGS_russian_roulette;
+                    MIS = p * p / (p * p + q * q);
+                }
+                result += weight * f/p * LI.obj->mat->Kd * MIS;
             }
         }
         
@@ -356,7 +364,13 @@ Color Scene::Pathtrace(const Ray& ray)
 
         if (i2.obj->mat->isLight())
         {
-            result += weight * i2.obj->mat->Kd;
+            real MIS = static_cast<real>(1);
+            if (FLAGS_MIS)
+            {
+                real q = PDFLight(i2) / GeometryTerm(i,i2);
+                MIS = p*p/(p*p+q*q);
+            }
+            result += MIS * weight * i2.obj->mat->Kd;
             return result;
         }
 
@@ -368,6 +382,9 @@ Color Scene::Pathtrace(const Ray& ray)
 
 void Scene::TraceImage(Color* image, const int pass)
 {
+    if (FLAGS_MIS)
+        FLAGS_explicit = true;
+
     cam.SetDims(width, height);
 
     Output o = Output::Trace;
@@ -399,7 +416,7 @@ void Scene::TraceImage(Color* image, const int pass)
                 Color color(0,0,0);
                 
                 Ray r = Ray(Vector3(), Vector3());
-                if (o != Output::Trace)
+                if (o != Output::Trace || !FLAGS_AA)
                    r = cam.MakeRay(x, y);
                 else 
                    r = cam.MakeRayAA(x, y);
