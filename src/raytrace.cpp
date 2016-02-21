@@ -30,6 +30,7 @@ DEFINE_int32(dump_rate, 8, "The application will dump images at powers of this n
 DEFINE_bool(explicit, true, "Include the explicit light connection in the path tracing algorithm.");
 DEFINE_bool(MIS, true, "Include multiple-importance-sampling. Implies explicit light connection.");
 DEFINE_bool(AA, true, "Do basic AA by picking ray randomly over full pixel area");
+DEFINE_uint64(num_iterations, 0, "The amount of iterations to run, a value of 0 indicates no predefined stopping point.");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -433,6 +434,8 @@ void Scene::TraceImage(Color* image, const int pass)
         //only loop if we are tracing
         if (o != Output::Trace)
             break;
+        if (FLAGS_num_iterations != 0 && iterations == FLAGS_num_iterations)
+            break;
 
         iterations++;
         if (iterations == output_it)
@@ -459,6 +462,13 @@ void Scene::TraceImage(Color* image, const int pass)
         break;
     case Output::Lit:
         extension = "_l";
+        break;
+    case Output::Trace:
+        {
+            std::ostringstream os;
+            os << "_" << iterations;
+            extension = os.str();
+        }
         break;
     default:
         break;
