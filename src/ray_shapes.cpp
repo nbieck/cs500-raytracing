@@ -293,16 +293,16 @@ bool Triangle::Intersect(const Ray& ray, Intersection& i)
 
     Vector3 S = ray.GetPos() - m_v0;
     real u = p.dot(S) / d;
-    if (u <= 0 || u >= 1)
+    if (u <= std::numeric_limits<real>::epsilon() || u >= 1)
         return false;
 
     Vector3 q = S.cross(e1);
     real v = (ray.GetDir().dot(q)) / d;
-    if (v <= 0 || (u + v) >= 1)
+    if (v <= std::numeric_limits<real>::epsilon() || (u + v) >= 1)
         return false;
 
     real t = e2.dot(q) / d;
-    if (t < 0)
+    if (t < std::numeric_limits<real>::epsilon())
         return false;
 
     i.t = t;

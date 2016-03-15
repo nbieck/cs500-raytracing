@@ -31,6 +31,7 @@ DEFINE_bool(explicit, true, "Include the explicit light connection in the path t
 DEFINE_bool(MIS, true, "Include multiple-importance-sampling. Implies explicit light connection.");
 DEFINE_bool(AA, true, "Do basic AA by picking ray randomly over full pixel area");
 DEFINE_uint64(num_iterations, 0, "The amount of iterations to run, a value of 0 indicates no predefined stopping point.");
+DEFINE_bool(overwrite, false, "Keep overwriting the same image instead of making new ones");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -409,6 +410,7 @@ void Scene::TraceImage(Color* image, const int pass)
     //infinite loop for fun and profit
     while (true)
     {
+        iterations++;
 #pragma omp parallel for schedule(dynamic, 1) // Magic: Multi-thread y loop
         for (int y=0;  y<height;  y++) 
         {
@@ -428,6 +430,8 @@ void Scene::TraceImage(Color* image, const int pass)
                     color = Pathtrace(r);
 
                 image[y*width + x] += color;
+                //Color old = image[y*width + x];
+                //image[y*width + x] = old + (1 / static_cast<real>(iterations)) * (color - old);
             }
         }
 
@@ -437,11 +441,11 @@ void Scene::TraceImage(Color* image, const int pass)
         if (FLAGS_num_iterations != 0 && iterations == FLAGS_num_iterations)
             break;
 
-        iterations++;
         if (iterations == output_it)
         {
             std::ostringstream os;
-            os << "_" << iterations;
+            if (!FLAGS_overwrite)
+                os << "_" << iterations;
             WriteHdrImage(FLAGS_out_base + os.str() + ".hdr", width, height, image, static_cast<real>(iterations));
             std::cout << "Writing " + FLAGS_out_base + os.str() + ".hdr" << std::endl;
             output_it *= FLAGS_dump_rate;
@@ -474,5 +478,5 @@ void Scene::TraceImage(Color* image, const int pass)
         break;
     }
 
-    WriteHdrImage(FLAGS_out_base + extension + ".hdr", width, height, image);
+    WriteHdrImage(FLAGS_out_base + extension + ".hdr", width, height, image, static_cast<real>(iterations));
 }
