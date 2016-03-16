@@ -32,6 +32,7 @@ DEFINE_bool(MIS, true, "Include multiple-importance-sampling. Implies explicit l
 DEFINE_bool(AA, true, "Do basic AA by picking ray randomly over full pixel area");
 DEFINE_uint64(num_iterations, 0, "The amount of iterations to run, a value of 0 indicates no predefined stopping point.");
 DEFINE_bool(overwrite, false, "Keep overwriting the same image instead of making new ones");
+DEFINE_bool(reflection, true, "Include specular reflection in the BRDF");
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -285,19 +286,99 @@ Vector3 SampleLobe(Vector3 N, real cTheta, real Phi)
     return q._transformVector(K);
 }
 
-Vector3 SampleBRDF(const Intersection& i)
+real Chi(real d)
 {
-    return SampleLobe(i.n, std::sqrt(myrandom(RNGen)), 2.0 * PI * myrandom(RNGen));
+    if (d > 0)
+        return static_cast<real>(1);
+
+    return static_cast<real>(0);
 }
 
-real PDF_BRDF(const Intersection& i, const Vector3& w_i)
+//BRDF functions
+
+Color F(real d, const Intersection& i)
 {
-    return i.n.dot(w_i) / PI;
+    return i.obj->mat->Ks + (1 - i.obj->mat->Ks) * std::pow(1 - std::abs(d), 5);
+}
+real D(const Vector3& m, const Intersection& i)
+{
+    return Chi(m.dot(i.n)) * (i.obj->mat->alpha + 2) / (2 * PI) * std::pow(m.dot(i.n), i.obj->mat->alpha);
+}
+real G1(const Vector3& v, const Vector3& m, const Intersection& i)
+{
+    real v_dot_n = v.dot(i.n);
+    if (v_dot_n > 1)
+        return 1;
+
+    real tan_theta = std::sqrt(1 - v_dot_n * v_dot_n) / v_dot_n;
+
+    if (std::abs(tan_theta) < std::numeric_limits<real>::epsilon())
+        return 1;
+
+    real a = std::sqrt(i.obj->mat->alpha / 2 + 1) / tan_theta;
+
+    real val;
+    if (a < 1.6)
+    {
+        val = (3.535 * a + 2.181 * a * a) / (1 + 2.276 * a + 2.577 * a * a);
+    }
+    else 
+        val = 1;
+
+    return Chi(v.dot(m) / v_dot_n) * val;
+}
+real G(const Vector3& w_o, const Vector3& w_i, const Vector3& m, const Intersection& i)
+{
+    return G1(w_o, m, i) * G1(w_i, m, i);
 }
 
-Color EvalBRDF(const Intersection& i)
+Vector3 SampleBRDF(const Vector3& w_o, const Intersection& i)
 {
-    return i.obj->mat->Kd / PI;
+    real choice = myrandom(RNGen);
+
+    if (choice < 0.5 || !FLAGS_reflection)
+        return SampleLobe(i.n, std::sqrt(myrandom(RNGen)), 2.0 * PI * myrandom(RNGen));
+    else
+    {
+        Vector3 m = SampleLobe(i.n, std::pow(myrandom(RNGen), 1 / (i.obj->mat->alpha + 1)), 2.0 * PI * myrandom(RNGen));
+        return 2 * (w_o.dot(m)) * m - w_o;
+    }
+}
+
+real PDF_BRDF(const Vector3& w_o, const Intersection& i, const Vector3& w_i)
+{
+    //probability for diffuse
+    real P_d = i.n.dot(w_i) / PI;
+
+    if (!FLAGS_reflection)
+        return P_d;
+
+    //probablility of reflection
+    Vector3 m = (w_o + w_i).normalized();
+    if (std::abs(w_i.dot(m)) < std::numeric_limits<real>::epsilon())
+            return P_d;
+
+    real P_r = D(m, i) * std::abs(m.dot(i.n)) * (1 / (4 * std::abs(w_i.dot(m))));
+
+    return 0.5 * P_d + 0.5 * P_r;
+}
+
+Color EvalBRDF(const Vector3& w_o, const Intersection& i, const Vector3& w_i)
+{
+    Color diff = i.obj->mat->Kd / PI;
+
+    if (!FLAGS_reflection)
+        return diff;
+
+    Vector3 m = (w_o + w_i).normalized();
+    real i_dot_n = w_i.dot(i.n);
+    real o_dot_n = w_o.dot(i.n);
+    if (std::abs(i_dot_n) < std::numeric_limits<real>::epsilon() || std::abs(o_dot_n) < std::numeric_limits<real>::epsilon())
+        return 0.5 * diff;
+
+    Color spec = D(m, i) * G(w_o, w_i, m, i) * F(w_i.dot(m), i) / (4 * std::abs(i_dot_n) * std::abs(o_dot_n));
+
+    return 0.5 * diff + 0.5 * spec;
 }
 
 Intersection Scene::SampleLight()
@@ -332,6 +413,8 @@ Color Scene::Pathtrace(const Ray& ray)
         return i.obj->mat->Kd;
     }
 
+    Vector3 w_o = -ray.GetDir();
+
     while (myrandom(RNGen) < FLAGS_russian_roulette)
     {
         //explicit light goes here
@@ -341,13 +424,13 @@ Color Scene::Pathtrace(const Ray& ray)
             real p = PDFLight(L) / GeometryTerm(i,L);
             Vector3 w_i = (L.p - i.p).normalized();
             Intersection LI = CastRay(Ray(i.p, w_i));
-            if (p > 0 && !std::isinf(LI.t) && LI.obj == L.obj && LI.p.isApprox(L.p))
+            if (p > std::numeric_limits<real>::epsilon() && !std::isinf(LI.t) && LI.obj == L.obj && LI.p.isApprox(L.p))
             {
-                Color f = (i.n.dot(w_i)) * EvalBRDF(i);
+                Color f = (i.n.dot(w_i)) * EvalBRDF(w_o, i, w_i);
                 real MIS = static_cast<real>(1);
                 if (FLAGS_MIS)
                 {
-                    real q = PDF_BRDF(i, w_i) * FLAGS_russian_roulette;
+                    real q = PDF_BRDF(w_o, i, w_i) * FLAGS_russian_roulette;
                     MIS = p * p / (p * p + q * q);
                 }
                 result += weight * f/p * LI.obj->mat->Kd * MIS;
@@ -355,13 +438,16 @@ Color Scene::Pathtrace(const Ray& ray)
         }
         
         //keep tracing
-        Vector3 w_i = SampleBRDF(i);
+        Vector3 w_i = SampleBRDF(w_o, i);
         Intersection i2 = CastRay(Ray(i.p, w_i));
         if (std::isinf(i2.t))
             return result;
 
-        Color f = i.n.dot(w_i) * EvalBRDF(i);
-        real p = PDF_BRDF(i,w_i) * FLAGS_russian_roulette;
+        Color f = i.n.dot(w_i) * EvalBRDF(w_o, i, w_i);
+        real p = PDF_BRDF(w_o, i,w_i) * FLAGS_russian_roulette;
+        if (p < std::numeric_limits<real>::epsilon())
+            return result;
+
         weight *= f/p;
 
         if (i2.obj->mat->isLight())
@@ -377,6 +463,7 @@ Color Scene::Pathtrace(const Ray& ray)
         }
 
         i = i2;
+        w_o = -w_i;
     }
 
     return result;
