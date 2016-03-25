@@ -524,7 +524,7 @@ void Scene::TraceImage(Color* image, const int pass)
                 else 
                     color = Pathtrace(r);
 
-                if (color.allFinite())
+                if (color.allFinite() && (color >= Color(0,0,0)).all())
                     image[y*width + x] += color;
                 //Color old = image[y*width + x];
                 //image[y*width + x] = old + (1 / static_cast<real>(iterations)) * (color - old);
