@@ -302,12 +302,20 @@ Color F(real d, const Intersection& i)
 }
 real D(const Vector3& m, const Intersection& i)
 {
-    return Chi(m.dot(i.n)) * (i.obj->mat->alpha + 2) / (2 * PI) * std::pow(m.dot(i.n), i.obj->mat->alpha);
+    real m_dot_n = m.dot(i.n);
+
+    if (m_dot_n < std::numeric_limits<real>::epsilon())
+        return 0;
+
+    return Chi(m_dot_n) * (i.obj->mat->alpha + 2) / (2 * PI) * std::pow(m_dot_n, i.obj->mat->alpha);
 }
 real G1(const Vector3& v, const Vector3& m, const Intersection& i)
 {
     real v_dot_n = v.dot(i.n);
-    if (v_dot_n > 1)
+    if (v_dot_n > (1 - std::numeric_limits<real>::epsilon()))
+        return 1;
+
+    if (v_dot_n < std::numeric_limits<real>::epsilon())
         return 1;
 
     real tan_theta = std::sqrt(1 - v_dot_n * v_dot_n) / v_dot_n;
@@ -516,7 +524,8 @@ void Scene::TraceImage(Color* image, const int pass)
                 else 
                     color = Pathtrace(r);
 
-                image[y*width + x] += color;
+                if (color.allFinite())
+                    image[y*width + x] += color;
                 //Color old = image[y*width + x];
                 //image[y*width + x] = old + (1 / static_cast<real>(iterations)) * (color - old);
             }
@@ -535,7 +544,10 @@ void Scene::TraceImage(Color* image, const int pass)
                 os << "_" << iterations;
             WriteHdrImage(FLAGS_out_base + os.str() + ".hdr", width, height, image, static_cast<real>(iterations));
             std::cout << "Writing " + FLAGS_out_base + os.str() + ".hdr" << std::endl;
-            output_it *= FLAGS_dump_rate;
+            if (!FLAGS_overwrite)
+                output_it *= FLAGS_dump_rate;
+            else
+                output_it += FLAGS_dump_rate;
         }
     }
 
